@@ -1,0 +1,9 @@
+syntax: glob
+.gradle
+.idea/libraries
+.idea/workspace.xml
+local.properties
+build
+captures
+*.iml
+.gitignore
