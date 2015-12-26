@@ -84,6 +84,10 @@ public class MainActivity extends AppCompatActivity {
         // Computes the kernel
         sum.forEach_sum1(inAllocation, outAllocation);
 
+        // It is needed to call the finish function before accessing the Allocation natively, as
+        // kernels are not synchronous to Java but only to RS context.
+        mRS.finish();
+
         byte outArray[] = new byte[3];
 
         // Copies output to local variable (for demonstration purposes)

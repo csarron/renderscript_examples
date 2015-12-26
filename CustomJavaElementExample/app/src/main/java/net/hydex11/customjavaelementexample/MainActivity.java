@@ -48,8 +48,10 @@ public class MainActivity extends AppCompatActivity {
         // Creates an Allocation that will contain indices
         int indexes[] = new int[elementsCount];
         for (int i = 0; i < elementsCount; i++)
-            indexes[i] = i;
+            indexes[i] = i; // So that indexes[0] = 0, indexes[1] = 1 etc..
         Allocation mIndexesAllocation = Allocation.createSized(mRS, Element.I32(mRS), elementsCount);
+
+        // Fills indexes Allocation with calculated indexes
         mIndexesAllocation.copyFrom(indexes);
 
         // Fills the custom allocation with some data
