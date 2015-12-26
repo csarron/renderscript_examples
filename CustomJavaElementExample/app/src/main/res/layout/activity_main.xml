@@ -7,12 +7,10 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="net.hydex11.customelementexample.MainActivity">
+    tools:context="net.hydex11.customjavaelementexample.MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Look inside logcat. Seek for &quot;My custom Element&quot;"
-        android:id="@+id/textView2" />
-
+        android:text="Look inside logcat. Seek for &quot;My custom Element&quot;" />
 </RelativeLayout>
