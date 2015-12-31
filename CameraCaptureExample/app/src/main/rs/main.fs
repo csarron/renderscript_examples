@@ -8,6 +8,9 @@ int2 sizeIn;
 float scaleInv;
 rs_allocation aIn;
 
+// Brightness threshold
+int threshold = 200;
+
 const static float3 grayMultipliers = {0.299f, 0.587f, 0.114f};
 
 uchar4 __attribute__((kernel)) root(uint32_t x, uint32_t y) {
@@ -40,8 +43,7 @@ uchar4 __attribute__((kernel)) root(uint32_t x, uint32_t y) {
     	                      (float) in.b * grayMultipliers.b);
 
     // Pixels brighter than this threshold will appear red!
-    int threshold = 200;
-        uchar4 out;
+    uchar4 out;
 
     if(grayValue > threshold){
         out.r = 255;

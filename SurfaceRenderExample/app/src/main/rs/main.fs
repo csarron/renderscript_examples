@@ -11,34 +11,36 @@ int renderAllocationWidth;
 int renderAllocationHeight;
 
 const float gy = 9.81f; // Constant value for vertical acceleration in pixels/second^2
+const static uchar4 black = {0,0,0,255}; // Base pixel, used to clean the screen
 
 // Creates a custom particle structure
 typedef struct Particle {
 
-    uchar4 color;
+    uchar4 color; // Color will be a random one
 
-    float x;
+    float x; // Current particle position in screen
     float y;
 
     float vx, vy; // Speed in pixels/second
 
-    int lastUpdateTime;
+    int lastUpdateTime; // Last time the particle was checked by the code
 
-    bool isValid;
+    bool isValid; // If particle is not valid, it gets reinitialized
 
 } Particle_t;
 
-const static uchar4 black = {0,0,0,255};
-
+// Clears the screen and makes everything black
 uchar4 __attribute__((kernel)) cleanRenderAllocation(uint32_t x, uint32_t y){
-return black;
+    return black;
 }
 
+// Marks all particles as not valid, so that all of them have to be reinitialized
 Particle_t __attribute__((kernel)) initParticles(Particle_t in, uint32_t x) {
-in.isValid = false;
-return in;
+    in.isValid = false;
+    return in;
 }
 
+// Random number function, faster than rsRand
 // http://stackoverflow.com/questions/28115905/rsrand-significantly-slows-down-renderscript
 uint32_t r0 = 0x6635e5ce, r1 = 0x13bf026f, r2 = 0x43225b59, r3 = 0x3b0314d0;
 static float getRandomNumber(){
@@ -48,18 +50,21 @@ uint32_t t = r0 ^ (r0 << 11);
   return (float) r3 / 0xffffffff;
 }
 
-// Kernel that fills Allocation with some data
+// Kernel function that updates particles and draws their positions
 Particle_t __attribute__((kernel)) drawParticles(Particle_t in, uint32_t x) {
 
     // If particle is new, so not valid, creates it at random height and enters screen from left
     if(in.isValid == false)
     {
         in.x=0;
-        in.y=rsRand(0,renderAllocationHeight);
+        in.y=getRandomNumber()*(float)renderAllocationHeight;
 
-        // Calculates a random launch angle for the particle (horizontal axis)
-        float angle = rsRand(-15,60)/180*M_PI;
-        float launchSpeed = rsRand(1,60);
+        // Calculates a random launch angle for the particle (horizontal axis),
+        // min angle is -15, so pointing a bit downwards, max is 60, upwards
+        float angle = radians(getRandomNumber()*75.0f-15.0f);
+
+        // Calculate random launch speed, min 5, max 60
+        float launchSpeed = getRandomNumber()*55.0f+5.0f;
 
         // Sets current horizontal speed at random value
         in.vx = launchSpeed * cos(angle);

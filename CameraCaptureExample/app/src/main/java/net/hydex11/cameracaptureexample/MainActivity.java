@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+import android.view.View;
 
 /*
 * This example application shows how it is possible to use camera preview image to perform
@@ -30,6 +31,7 @@ import android.view.TextureView;
 * 3) Wait for output surface to get ready and instantiate the RS script output Allocation
 * 4) Computes RS calculations on possible camera preview frames
 *
+* Program will terminate when screen is touched (so when upper surface is touched)
 *
 * */
 public class MainActivity extends AppCompatActivity {
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         surfaceView.setZOrderOnTop(false);
 
+        // Rendering surface
         TextureView textureView = (TextureView) findViewById(R.id.textureView);
         // Enables support for alpha value in pixels (0 is transparent pixel)
         textureView.setOpaque(false);
@@ -68,6 +71,13 @@ public class MainActivity extends AppCompatActivity {
         // Enables surface callback to init the entire process.
         // When surface gets initialized, camera preview is enabled
         surfaceView.getHolder().addCallback(mSurfaceHolderCallback);
+
+        textureView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.finish(); // Terminates app when surface is clicked
+            }
+        });
 
     }
 
