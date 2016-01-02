@@ -1,5 +1,6 @@
 package net.hydex11.surfacerenderexample;
 
+import android.app.Activity;
 import android.app.Application;
 import android.graphics.SurfaceTexture;
 import android.os.AsyncTask;
@@ -38,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
         example();
     }
 
-    // Bolean that tells the script when to end. We will make it end by touching the surface
-    boolean canRun = true;
+    // Thread that handles the compute loop
+    Thread rsLoop;
 
     private void example() {
         // Initializes RenderScript context
@@ -57,7 +58,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // After touching the surface, application will end.
-                canRun=false;
+                if(rsLoop != null)
+                    rsLoop.interrupt();
+
+                MainActivity.this.finish();
             }
         });
     }
@@ -140,11 +144,11 @@ public class MainActivity extends AppCompatActivity {
     private void RSLoop() {
         // As we are moving on an endless loop, it is better to not run it on the UI thread, but
         // on a different one
-        new Thread(new Runnable() {
+        rsLoop = new Thread(new Runnable() {
 
             @Override
             public void run() {
-                while (canRun) {
+                while (true) {
 
                     if (!isProcessing) {
                         isProcessing = true;
@@ -158,16 +162,16 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             Thread.sleep(20, 0);
                         } catch (InterruptedException e) {
+                            // Can be caused by touching the surface, as we will be ending this
+                            // Thread in a bad manner
                             throw new RuntimeException(e);
                         }
                     }
                 }
 
-                // We reach this point only if the surface was touched, so in this case we can exit
-                // the app
-                MainActivity.this.finish();
             }
-        }).start();
+        });
+        rsLoop.start();
     }
 
     private void loop() {

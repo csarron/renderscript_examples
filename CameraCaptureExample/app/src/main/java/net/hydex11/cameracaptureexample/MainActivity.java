@@ -2,6 +2,7 @@ package net.hydex11.cameracaptureexample;
 
 import android.graphics.Point;
 import android.hardware.Camera;
+import android.renderscript.Allocation;
 import android.renderscript.RenderScript;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,7 +28,7 @@ import android.view.View;
 * Workflow is the following:
 *
 * 1) First of all we wait for camera preview surface to get initialized
-* 2) We open the camera, get the calculated preview size
+* 2) We open the camera, get the right preview size
 * 3) Wait for output surface to get ready and instantiate the RS script output Allocation
 * 4) Computes RS calculations on possible camera preview frames
 *
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            Log.d(TAG, "Preview surface changed");
             resetCamera(holder);
         }
 
@@ -125,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
             cameraSetup.setCameraBuffersCount(1);
             cameraSetup.setPreviewSurfaceHolder(holder);
             cameraSetup.setMaxPreviewSize(new Point(1280, 720));
+
+            // This callback will be called on every camera frame. Computation happens in it
             cameraSetup.setPreviewCallback(previewCallback);
 
             try {
@@ -162,12 +166,14 @@ public class MainActivity extends AppCompatActivity {
     Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
-            // On every camera frame, checks if current RenderScript output surface is valid,
-            // instantiated and checks that current RenderScript custom class is istantiated too
-            if (rsRenderHolder.isValidHolder() && rsCompute != null) {
-                // Execute computation
-                rsCompute.compute(data, rsRenderHolder.getRSRenderHolderAllocation());
 
+            // On every camera frame, checks if current RenderScript output surface is valid,
+            // instantiated and checks that current RenderScript custom class is instantiated too
+            if (rsRenderHolder.isValidHolder() && rsCompute != null) {
+
+                // Execute computation
+                Allocation outputAllocation =  rsRenderHolder.getRSRenderHolderAllocation();
+                rsCompute.compute(data, outputAllocation);
             }
 
             // Adds camera buffer back so that can be used on next acquired frame
