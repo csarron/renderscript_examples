@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="net.hydex11.colornormalizationexample.MainActivity"
+    android:orientation="vertical"
+    android:weightSum="2">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageView"
+        android:layout_weight="1"
+        android:scaleType="centerInside" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageView2"
+        android:layout_weight="1"
+        android:scaleType="centerInside" />
+
+</LinearLayout>
