@@ -40,6 +40,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import net.hydex11.dynamicbytecodeloaderexample.Common.ScriptData;
 /**
  * Created by Alberto on 03/01/2016.
  */
@@ -49,16 +50,24 @@ public class RenderScriptHolder {
     // it would not be suitable to interfere with other scripts
     private String mCachePath;
 
+    // Source activity
     private Activity context;
 
     private RenderScript mRS;
 
+    // nScriptCCreate hidden RenderScript method. This function is used by RS to obtain
+    // the pointer address for a loaded bytecode file
     private Method nScriptCCreate;
+
+    // nScriptForEach hidden RenderScript method. This function is used by RS to call
+    // a kernel for a script. The kernel is identified by its slot.
+    private Method nScriptForEach;
 
     public RenderScriptHolder(Activity activity) {
         context = activity;
         mRS = RenderScript.create(context);
 
+        // Pre loads cache dir
         getRSCacheDir();
     }
 
@@ -66,16 +75,21 @@ public class RenderScriptHolder {
         return mRS;
     }
 
+    // Loads bytecode file
     public long loadDynamicScript(String scriptName, File scriptFile) throws IOException {
 
+        // Gets method to store bytecode file and retrieve its wrapper's pointer
         Method initMethod = getRSScriptCCreateMethod();
+
         String cachePath = getRSCacheDir();
 
+        // Loads bytecode (byte[]) from unzipped file
         ScriptData scriptData = readScriptFile(scriptFile);
 
+        // Invoke create method, returning pointer address.
         // synchronized long nScriptCCreate(String resName, String cacheDir, byte[] script, int length)
         try {
-            return (long) initMethod.invoke(mRS, scriptName, cachePath, scriptData.data, scriptData.length);
+            return (long) initMethod.invoke(mRS, scriptName, cachePath, scriptData.getData(), scriptData.getLength());
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {
@@ -83,25 +97,8 @@ public class RenderScriptHolder {
         }
     }
 
-    private class ScriptData {
-        private byte[] data;
-
-        public int getLength() {
-            return length;
-        }
-
-        public byte[] getData() {
-            return data;
-        }
-
-        private int length;
-
-        public ScriptData(byte[] data, int length) {
-            this.data = data;
-            this.length = length;
-        }
-    }
-
+    // Loads bytecode file
+    // Source: https://android.googlesource.com/platform/frameworks/base/+/jb-mr2-release/graphics/java/android/renderscript/ScriptC.java#72
     private ScriptData readScriptFile(File scriptFile) throws IOException {
         byte[] pgm;
         int pgmLength;
@@ -131,6 +128,7 @@ public class RenderScriptHolder {
         return new ScriptData(pgm, pgmLength);
     }
 
+    // Uses reflection to access private RS nScriptCCreate method
     private Method getRSScriptCCreateMethod() {
         if (nScriptCCreate == null)
 
@@ -148,57 +146,13 @@ public class RenderScriptHolder {
         return nScriptCCreate;
     }
 
-    private String getRSCacheDir() {
-        if (mCachePath == null) {
-            File extDir = new File(Common.externalDirPath, "cache");
-
-            mCachePath = extDir.getAbsolutePath();
-
-            extDir.mkdirs();
-        }
-
-        return mCachePath;
-        //        Log.v(TAG, "Create script for resource = " + resName);
-        //return rs.nScriptCCreate(resName, mCachePath, pgm, pgmLength);
-    }
-
-    public void callKernel(long scriptPointer, int kernelSlot, Allocation ain, Allocation aout) {
-        Method initMethod = getMethodnScriptForEach();
-
-        long in[] = new long[1];
-        in[0] = getAllocationPointer(ain);
-        long out = getAllocationPointer(aout);
-
-        try {
-            switch (Build.VERSION.SDK_INT) {
-                case Build.VERSION_CODES.LOLLIPOP:
-                case Build.VERSION_CODES.LOLLIPOP_MR1:
-                    // synchronized void nScriptForEach(long id, int slot, long ain, long aout, byte[] params) {
-                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in[0], out, null);
-                    break;
-                case Build.VERSION_CODES.M:
-                    // void nScriptForEach(long id, int slot, long[] ains, long aout, byte[] params, int[] limits)
-                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in, out, null, null);
-                    break;
-                case Build.VERSION_CODES.KITKAT:
-                default:
-                    //  void nScriptForEach(int id, int slot, int ain, int aout, byte[] params) {
-                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in[0], out, null);
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Method nScriptForEach;
-
+    // Uses reflection to access private RS nScriptForEach method.
     private Method getMethodnScriptForEach() {
         if (nScriptForEach == null)
             try {
                 Method method;
 
+                // This method had changed with time, so we need to map it correctly for each Android version.
                 switch (Build.VERSION.SDK_INT) {
                     case Build.VERSION_CODES.LOLLIPOP:
                     case Build.VERSION_CODES.LOLLIPOP_MR1:
@@ -229,6 +183,52 @@ public class RenderScriptHolder {
         return nScriptForEach;
     }
 
+    // Gets RS cache dir. Makes it if not exists
+    private String getRSCacheDir() {
+        if (mCachePath == null) {
+            File extDir = new File(Common.externalDirPath, "cache");
+
+            mCachePath = extDir.getAbsolutePath();
+
+            extDir.mkdirs();
+        }
+
+        return mCachePath;
+    }
+
+    // Invokes a kernel over input and output allocations
+    public void callKernel(long scriptPointer, int kernelSlot, Allocation ain, Allocation aout) {
+        Method initMethod = getMethodnScriptForEach();
+
+        // Gets allocations pointer addresses
+        long in[] = new long[1];
+        in[0] = getAllocationPointer(ain);
+        long out = getAllocationPointer(aout);
+
+        try {
+            switch (Build.VERSION.SDK_INT) {
+                case Build.VERSION_CODES.LOLLIPOP:
+                case Build.VERSION_CODES.LOLLIPOP_MR1:
+                    // synchronized void nScriptForEach(long id, int slot, long ain, long aout, byte[] params) {
+                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in[0], out, null);
+                    break;
+                case Build.VERSION_CODES.M:
+                    // void nScriptForEach(long id, int slot, long[] ains, long aout, byte[] params, int[] limits)
+                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in, out, null, null);
+                    break;
+                case Build.VERSION_CODES.KITKAT:
+                default:
+                    //  void nScriptForEach(int id, int slot, int ain, int aout, byte[] params) {
+                    initMethod.invoke(mRS, scriptPointer, kernelSlot, in[0], out, null);
+            }
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Uses Reflection to access private mID field, which contains pointer address for Allocations
     long getAllocationPointer(Allocation allocation) {
         Field allocationIDField = null;
         long AllocationID = 0;

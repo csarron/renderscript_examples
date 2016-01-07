@@ -78,9 +78,10 @@ public class RSScriptParser {
     private static final String DELIMITER = "//D ";
 
     private static void parseRSFile(String filePath, String outputDir) {
-
+        // Returns filename without path and extension, lower cased
         String baseFileName = getFileNameWithoutPathAndExtension(filePath).toLowerCase();
 
+        // Checks that corresponding .bc file exists for current script
         String bcFileName = outputDir + File.separator + baseFileName + ".bc";
         if (!Files.exists(Paths.get(bcFileName), LinkOption.NOFOLLOW_LINKS)) {
             System.err.println(String.format("Skipping file %s because of missing corresponding bytecode file", filePath));
@@ -90,21 +91,24 @@ public class RSScriptParser {
         try {
             Path path = Paths.get(filePath);
 
+            // Loads .rs file, one String for each line
             List<String> lines = Files.readAllLines(path, Charset.defaultCharset());
 
+            // Array to store output .properties file contents
             ArrayList<String> outputLines = new ArrayList<>();
 
             for (String line : lines) {
-
                 if (!line.startsWith(DELIMITER))
-                    continue; // Skips line if is not related to our system
+                    continue; // Skips line if is not related to our properties extraction system
 
                 line = line.substring(DELIMITER.length()); // Clears line from delimiter
 
-                outputLines.add(line);
+                // TODO possible improvement, check that line is valid
 
+                outputLines.add(line);
             }
 
+            // Writes loaded lines in properties file
             String fileName = outputDir + File.separator + baseFileName + ".properties";
 
             FileWriter fw = new FileWriter(fileName);
@@ -115,22 +119,21 @@ public class RSScriptParser {
 
             fw.close();
 
+            // Now bundles .bc and .properties into .zip file
+            zipRSScript(outputDir, baseFileName);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // Now zip it!
-        zipRSScript(outputDir, baseFileName);
     }
 
     private static void zipRSScript(String outputDir, String baseFileName) {
         try {
-
             String outputFileName = outputDir + File.separator + baseFileName + ".zip";
             String inputFileNameBytecode = outputDir + File.separator + baseFileName + ".bc";
             String inputFileNameProperties = outputDir + File.separator + baseFileName + ".properties";
 
-            // out put file
+            // Output file
             ZipOutputStream out = new ZipOutputStream(new FileOutputStream(outputFileName));
 
             addZipEntry(baseFileName + ".bc", inputFileNameBytecode, out);
@@ -144,9 +147,9 @@ public class RSScriptParser {
 
     private static void addZipEntry(String fileName, String inputFilePath, ZipOutputStream outputStream) throws IOException {
 
-        // name the file inside the zip  file
+        // Sets zip entry file name
         outputStream.putNextEntry(new ZipEntry(fileName));
-        // input file
+        // Writes file content into zip stream
         FileInputStream in = new FileInputStream(inputFilePath);
 
         // buffer size
@@ -159,7 +162,7 @@ public class RSScriptParser {
     }
 
     private static String getFileNameWithoutPathAndExtension(String path) {
-        int idx = path.replaceAll("\\\\", "/").lastIndexOf("/");
+        int idx = path.replaceAll("\\\\", "/").lastIndexOf("/"); // For win platforms, replaces \ with /
         int withoutExtNameLength = path.lastIndexOf(".");
         return idx >= 0 ? path.substring(idx + 1, withoutExtNameLength) : path.substring(0, withoutExtNameLength);
     }

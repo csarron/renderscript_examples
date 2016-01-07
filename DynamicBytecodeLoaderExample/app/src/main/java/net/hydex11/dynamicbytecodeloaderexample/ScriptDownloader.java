@@ -40,12 +40,17 @@ import java.net.URLConnection;
 public class ScriptDownloader {
     private static final String TAG = "ScriptDownloader";
 
+    // Host wherefrom to download scripts
     private static String remoteUrl = "http://hydex11.net/rsbook/dynscripts/";
+
+    // Download directory
     public static String localDownloadDir = new File(Common.externalDirPath, "downloads").getAbsolutePath();
 
+    // Downloads file synchronously
+    // Source: http://www.codejava.net/java-se/networking/use-httpurlconnection-to-download-file-from-an-http-url
     private static final int BUFFER_SIZE = 4096;
     public static String downloadScript(String scriptName){
-        dirChecker();
+        Common.dirChecker(localDownloadDir);
         try {
             String fileURL = remoteUrl + scriptName + ".zip";
 
@@ -107,12 +112,5 @@ public class ScriptDownloader {
             throw new RuntimeException(e);
         }
         return null;
-    }
-    private static void dirChecker( ) {
-        File f = new File(localDownloadDir);
-
-        if(!f.isDirectory()) {
-            f.mkdirs();
-        }
     }
 }

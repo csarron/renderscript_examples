@@ -50,8 +50,7 @@ uchar4 __attribute__((kernel)) applyThreshold(uchar4 in) {
         in.r = 255;
         in.g = 0;
         in.b = 0;
-
-        }
+    }
 
     return in;
 }

@@ -32,9 +32,6 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/**
- * Created by Alberto on 04/01/2016.
- */
 public class Unzip {
     public static void unzipRemoteFile(String localFileName, String directoryPath){
         try  {
@@ -45,7 +42,7 @@ public class Unzip {
                 Log.v("Decompress", "Unzipping " + ze.getName());
 
                 if(ze.isDirectory()) {
-                    dirChecker(directoryPath, ze.getName());
+                    Common.dirChecker(directoryPath + File.separator + ze.getName());
                 } else {
                     FileOutputStream fout = new FileOutputStream(directoryPath + File.separator + ze.getName());
                     for (int c = zin.read(); c != -1; c = zin.read()) {
@@ -60,13 +57,6 @@ public class Unzip {
             zin.close();
         } catch(Exception e) {
             Log.e("Decompress", "unzip", e);
-        }
-    }
-    private static void dirChecker( String directoryPath, String dir) {
-        File f = new File(directoryPath + File.separator + dir);
-
-        if(!f.isDirectory()) {
-            f.mkdirs();
         }
     }
 }

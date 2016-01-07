@@ -71,12 +71,13 @@ public class MainActivity extends AppCompatActivity {
                 // Downloads file and returns zipped file path
                 String localFileName = ScriptDownloader.downloadScript(remoteScriptName);
 
-                // Unzip archive
+                // Unzips archive
                 Unzip.unzipRemoteFile(localFileName, ScriptDownloader.localDownloadDir);
 
                 File scriptFile = new File(ScriptDownloader.localDownloadDir, remoteScriptName + ".bc");
                 File propertiesFile = new File(ScriptDownloader.localDownloadDir, remoteScriptName + ".properties");
 
+                // Loads properties file
                 Properties properties = new Properties();
                 try {
                     InputStream is = new FileInputStream(propertiesFile);
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
                     throw new RuntimeException(e);
                 }
 
+                // Loads a property, in our case "kernelSlot". It not present, crash!
                 int kernelSlot;
                 try {
                      kernelSlot = Integer.parseInt(properties.getProperty("kernelSlot"));
@@ -93,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                     throw new RuntimeException(e);
                 }
 
+                // Test this script
                 renderScriptHolder = new RenderScriptHolder(MainActivity.this);
                 try {
                     long ptr = renderScriptHolder.loadDynamicScript(remoteScriptName, scriptFile);
@@ -106,13 +109,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // From here on, test!
+
     Bitmap inputImage;
 
     // Loads views
     ImageView imageViewInput;
     ImageView imageViewOutput;
 
-
+    // Initialize views, ran on UI thread
     private void initViews() {
         inputImage = BitmapFactory.decodeResource(getResources(), R.drawable.photo_wide);
 
@@ -123,9 +128,8 @@ public class MainActivity extends AppCompatActivity {
         imageViewInput.setImageBitmap(inputImage);
     }
 
-
     private void testScript(RenderScript mRS, long scriptPtr, int kernelSlot) {
-// Loads input image
+        // Loads input image
 
         // Fills input allocation with source image
         Allocation inputAllocation = Allocation.createFromBitmap(mRS, inputImage);
@@ -136,13 +140,14 @@ public class MainActivity extends AppCompatActivity {
         tb.setY(inputImage.getHeight());
         Allocation outputAllocation = Allocation.createTyped(mRS, tb.create());
 
-        // Call kernel!
+        // Call kernel! Here is our magic :)
         renderScriptHolder.callKernel(scriptPtr, kernelSlot, inputAllocation, outputAllocation);
 
         // Displays output image in view
         final Bitmap outputImage = Bitmap.createBitmap(inputImage.getWidth(), inputImage.getHeight(), Bitmap.Config.ARGB_8888);
         outputAllocation.copyTo(outputImage);
 
+        // Runs on UI thread, as only UI thread can update UI components
         Common.runOnUiThread(new Runnable() {
             @Override
             public void run() {
