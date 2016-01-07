@@ -40,7 +40,7 @@ import java.net.URLConnection;
 public class ScriptDownloader {
     private static final String TAG = "ScriptDownloader";
 
-    // Host wherefrom to download scripts
+    // Host wherefrom to download scripts. Have it finish with a slash!
     private static String remoteUrl = "http://hydex11.net/rsbook/dynscripts/";
 
     // Download directory
