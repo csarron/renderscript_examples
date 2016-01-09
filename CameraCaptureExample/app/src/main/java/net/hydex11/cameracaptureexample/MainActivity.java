@@ -24,10 +24,11 @@
 
 package net.hydex11.cameracaptureexample;
 
+import android.renderscript.*;
+
 import android.graphics.Point;
 import android.hardware.Camera;
-import android.renderscript.Allocation;
-import android.renderscript.RenderScript;
+
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         void resetCamera(SurfaceHolder holder) {
             // Resets custom camera handler if was set before
             // Useful if there is any surface size change (usually should be prevented!)
-            if (cameraHandler != null){
+            if (cameraHandler != null) {
                 cameraHandler.destroy();
             }
 
@@ -196,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
             if (rsRenderHolder.isValidHolder() && rsCompute != null) {
 
                 // Execute computation
-                Allocation outputAllocation =  rsRenderHolder.getRSRenderHolderAllocation();
+                Allocation outputAllocation = rsRenderHolder.getRSRenderHolderAllocation();
                 rsCompute.compute(data, outputAllocation);
             }
 

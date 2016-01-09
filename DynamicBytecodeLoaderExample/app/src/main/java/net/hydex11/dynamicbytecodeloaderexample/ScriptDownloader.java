@@ -24,18 +24,13 @@
 
 package net.hydex11.dynamicbytecodeloaderexample;
 
-import android.os.Environment;
-import android.renderscript.Script;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 
 public class ScriptDownloader {
     private static final String TAG = "ScriptDownloader";

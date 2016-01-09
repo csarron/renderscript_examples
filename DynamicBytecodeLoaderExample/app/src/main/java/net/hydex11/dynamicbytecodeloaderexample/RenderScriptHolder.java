@@ -25,15 +25,10 @@
 package net.hydex11.dynamicbytecodeloaderexample;
 
 import android.app.Activity;
-import android.content.res.Resources;
 import android.os.Build;
-import android.os.Environment;
-import android.renderscript.Allocation;
-import android.renderscript.RenderScript;
-
+import android.renderscript.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;

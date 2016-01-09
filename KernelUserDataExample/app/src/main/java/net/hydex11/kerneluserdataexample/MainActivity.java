@@ -24,19 +24,13 @@
 
 package net.hydex11.kerneluserdataexample;
 
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.FieldPacker;
-import android.renderscript.RenderScript;
-import android.renderscript.Script;
-import android.renderscript.ScriptC;
+// In this example we are not using Android support library as we are using reflection methods,
+// specific for android.renderscript package.
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private final static String TAG = "KernelUserDataExample";

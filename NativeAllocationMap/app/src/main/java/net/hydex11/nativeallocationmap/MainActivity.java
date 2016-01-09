@@ -24,14 +24,10 @@
 
 package net.hydex11.nativeallocationmap;
 
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
-
 import java.lang.reflect.Field;
 
 public class MainActivity extends AppCompatActivity {
@@ -99,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         printOutValues(textView2, sourceArray, true);
 
         // Defines input and output allocations
-        Allocation inAllocation = Allocation.createSized(mRS, Element.I32(mRS), 3);
+        Allocation inAllocation = Allocation.createSized(mRS, Element.U8(mRS), 3);
         Allocation outAllocation = Allocation.createSized(mRS, Element.U8(mRS), 3);
 
         // Copies predefined values to the input allocation

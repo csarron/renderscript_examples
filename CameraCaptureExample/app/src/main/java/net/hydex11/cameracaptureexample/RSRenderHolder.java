@@ -26,14 +26,12 @@ package net.hydex11.cameracaptureexample;
 
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.TextureView;
+
+import android.renderscript.*;
 
 /**
  * Created by Alberto on 28/12/2015.

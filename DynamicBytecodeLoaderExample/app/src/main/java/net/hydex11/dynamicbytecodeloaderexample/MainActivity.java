@@ -26,14 +26,10 @@ package net.hydex11.dynamicbytecodeloaderexample;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

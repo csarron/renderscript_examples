@@ -1,7 +1,6 @@
 syntax: glob
 .gradle
-.idea/libraries
-.idea/workspace.xml
+.idea
 local.properties
 build
 captures

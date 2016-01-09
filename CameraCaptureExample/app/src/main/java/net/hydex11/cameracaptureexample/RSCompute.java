@@ -23,15 +23,9 @@
  */
 
 package net.hydex11.cameracaptureexample;
-
+import android.renderscript.*;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.Int2;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicYuvToRGB;
-import android.renderscript.Type;
 
 /**
  * Created by Alberto on 28/12/2015.

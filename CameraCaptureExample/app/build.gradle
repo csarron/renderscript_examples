@@ -30,12 +30,17 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.cameracaptureexample"
+
         minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
 
         renderscriptTargetApi 18
+
+        // We cannot use RenderScript support mode here because we are using USAGE_IO_OUTPUT RS
+        // flag and USAGE_IO_* flags are supported in support library only starting from Android
+        // Marshmallow.
     }
     buildTypes {
         release {

@@ -24,20 +24,9 @@
 
 package net.hydex11.customjavaelementexample;
 
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
+import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.StreamCorruptedException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
 

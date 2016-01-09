@@ -24,23 +24,15 @@
 
 package net.hydex11.surfacerenderexample;
 
-import android.app.Activity;
-import android.app.Application;
 import android.graphics.SurfaceTexture;
-import android.os.AsyncTask;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
+
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
-
-import java.util.concurrent.ExecutionException;
 
 /*
 * SurfaceRenderExample shows how to use a surface (in this case a TextureView) to display

@@ -24,10 +24,7 @@
 
 package net.hydex11.customelementexample;
 
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptC;
+import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;

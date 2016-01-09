@@ -24,8 +24,7 @@
 
 package net.hydex11.rsmessagehandlerexample;
 
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptC;
+import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;

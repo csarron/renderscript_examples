@@ -24,12 +24,10 @@
 
 package net.hydex11.colornormalizationexample;
 
+import android.support.v8.renderscript.*;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
