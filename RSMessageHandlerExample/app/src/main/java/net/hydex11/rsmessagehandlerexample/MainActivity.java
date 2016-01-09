@@ -36,19 +36,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-    example();
+        example();
     }
 
     static final int MESSAGE_OK = 1;
 
-    RenderScript.RSMessageHandler myHandler = new RenderScript.RSMessageHandler(){
+    RenderScript.RSMessageHandler myHandler = new RenderScript.RSMessageHandler() {
         @Override
-        public void run()
-        {
-            switch (mID)
-            {
-                case ScriptC_main.const_MESSAGE_OK:
-                {
+        public void run() {
+            switch (mID) {
+                case ScriptC_main.const_MESSAGE_OK: {
                     // Handle mData, which is a int array
                     int x = mData[0];
                     int y = mData[1];
@@ -59,17 +56,18 @@ public class MainActivity extends AppCompatActivity {
 
                     TextView textView = (TextView) findViewById(R.id.textView);
 
-                    String outStr = String.format("x: %d, y: %d, bool: %d, float: %f", x,y,myBool ? 1 : 0, f);
+                    String outStr = String.format("x: %d, y: %d, bool: %d, float: %f", x, y, myBool ? 1 : 0, f);
                     textView.setText(outStr);
                 }
                 break;
-                default: super.run();
+                default:
+                    super.run();
                     break;
             }
         }
     };
 
-    void example(){
+    void example() {
 
         RenderScript mRS = RenderScript.create(this);
         mRS.setMessageHandler(myHandler);
