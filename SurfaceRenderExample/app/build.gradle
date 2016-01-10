@@ -30,11 +30,16 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.surfacerenderexample"
-        minSdkVersion 18
+        minSdkVersion 14
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        renderscriptTargetApi 18
+        renderscriptTargetApi 14
+        renderscriptSupportModeEnabled true
+
+        // We are using USAGE_IO_OUTPUT flag, which is not supported natively by Android
+        // RS support library v8. We included our custom built libRSSupportIO.so file
+        // wrapper library: https://bitbucket.org/cmaster11/rssupportiowrapper
     }
     buildTypes {
         release {
@@ -42,10 +47,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
+    compile project(':rssupportiowrapper-release')
 }

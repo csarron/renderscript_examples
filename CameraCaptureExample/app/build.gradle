@@ -31,16 +31,17 @@ android {
     defaultConfig {
         applicationId "net.hydex11.cameracaptureexample"
 
-        minSdkVersion 18
+        minSdkVersion 14
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
 
-        renderscriptTargetApi 18
+        renderscriptTargetApi 14
+        renderscriptSupportModeEnabled true
 
-        // We cannot use RenderScript support mode here because we are using USAGE_IO_OUTPUT RS
-        // flag and USAGE_IO_* flags are supported in support library only starting from Android
-        // Marshmallow.
+        // We are using USAGE_IO_OUTPUT flag, which is not supported natively by Android
+        // RS support library v8. We included our custom built libRSSupportIO.so file
+        // wrapper library: https://bitbucket.org/cmaster11/rssupportiowrapper
     }
     buildTypes {
         release {
@@ -54,4 +55,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
+    compile project(':rssupportiowrapper-release')
 }

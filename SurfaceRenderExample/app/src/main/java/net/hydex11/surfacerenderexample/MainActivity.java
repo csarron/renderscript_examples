@@ -26,7 +26,8 @@ package net.hydex11.surfacerenderexample;
 
 import android.graphics.SurfaceTexture;
 
-import android.renderscript.*;
+//import android.renderscript.*;
+import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 if(rsLoop != null)
                     rsLoop.interrupt();
 
-                MainActivity.this.finish();
+                System.exit(0);
             }
         });
     }
@@ -180,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                         } catch (InterruptedException e) {
                             // Can be caused by touching the surface, as we will be ending this
                             // Thread in a bad manner
-                            throw new RuntimeException(e);
+                           Log.d(TAG, "Thread interrupted");
                         }
                     }
                 }

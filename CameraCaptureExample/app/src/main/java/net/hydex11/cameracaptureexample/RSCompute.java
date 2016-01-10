@@ -23,7 +23,8 @@
  */
 
 package net.hydex11.cameracaptureexample;
-import android.renderscript.*;
+// import android.renderscript.*;
+import android.support.v8.renderscript.*;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 

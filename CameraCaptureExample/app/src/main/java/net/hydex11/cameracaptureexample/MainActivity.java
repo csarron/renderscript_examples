@@ -24,11 +24,11 @@
 
 package net.hydex11.cameracaptureexample;
 
-import android.renderscript.*;
+//import android.renderscript.*;
 
+import android.support.v8.renderscript.*;
 import android.graphics.Point;
 import android.hardware.Camera;
-
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;

@@ -1,9 +1,8 @@
 syntax: glob
 .gradle
-.idea
+.idea/workspace.xml
+.idea/libraries
 local.properties
 build
 captures
 *.iml
-.gitignore
-gradle
