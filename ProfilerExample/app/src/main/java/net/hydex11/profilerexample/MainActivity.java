@@ -24,6 +24,8 @@
 
 package net.hydex11.profilerexample;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
                     // but this is just a RS example!
                     exampleThread.interrupt();
 
-                MainActivity.this.finish();
+                System.exit(0);
             }
         });
 
@@ -68,18 +70,12 @@ public class MainActivity extends AppCompatActivity {
                 // Instantiate our RS context
                 final RenderScript mRS = RenderScript.create(MainActivity.this);
 
-                int count = 100000;
+                // Load input image
+                Bitmap inputBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.houseimage);
 
-                // Source of our Allocation, just some numbers
-                int myBigArray[] = new int[count];
-                for (int i = 0; i < count; i++) {
-                    myBigArray[i] = count;
-                }
-
-                // Instantiates the allocation. Be sure to not use a too big count, as it could
-                // cause an Out of Memory error
-                Allocation myAllocation = Allocation.createSized(mRS, Element.I32(mRS), count);
-                myAllocation.copyFrom(myBigArray);
+                // Instantiates the input allocation.
+                Allocation inputAllocation = Allocation.createFromBitmap(mRS, inputBitmap);
+                Allocation outputAllocation = Allocation.createTyped(mRS, inputAllocation.getType());
 
                 // Instantiates our profiler
                 Timings timings = new Timings();
@@ -100,6 +96,14 @@ public class MainActivity extends AppCompatActivity {
                 ScriptC_main main = new ScriptC_main(mRS);
                 ScriptC_main_fs main_fs = new ScriptC_main_fs(mRS);
 
+                main.set_in(inputAllocation);
+                main_fs.set_in(inputAllocation);
+
+                main.set_width(inputBitmap.getWidth());
+                main.set_height(inputBitmap.getHeight());
+                main_fs.set_width(inputBitmap.getWidth());
+                main_fs.set_height(inputBitmap.getHeight());
+
                 // Tells the profiler to output debug data every 100 cycles
                 timings.setTimingDebugInterval(100);
 
@@ -108,25 +112,12 @@ public class MainActivity extends AppCompatActivity {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
 
-                    main.forEach_root1(myAllocation, myAllocation);
+                    main.forEach_root(outputAllocation);
                     // Adds timing for kernel
-                    timings.addTiming("root");
+                    timings.addTiming("blur - RenderScript");
 
-                    main.forEach_root2(myAllocation, myAllocation);
-                    timings.addTiming("root2");
-
-                    main.forEach_root3(myAllocation, myAllocation);
-                    timings.addTiming("root3");
-
-                    main_fs.forEach_root1(myAllocation, myAllocation);
-                    // Adds timing for kernel
-                    timings.addTiming("root - fs");
-
-                    main_fs.forEach_root2(myAllocation, myAllocation);
-                    timings.addTiming("root2 - fs");
-
-                    main_fs.forEach_root3(myAllocation, myAllocation);
-                    timings.addTiming("root3 - fs");
+                    main_fs.forEach_root(outputAllocation);
+                    timings.addTiming("blur - FilterScript");
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
                     // in case it is.
@@ -138,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     } catch (InterruptedException e) {
                         // Will be caused by clicking on "End" button, as we will be interrupting
                         // this Thread brutally
-                        throw new RuntimeException(e);
+
                     }
                 }
             }
