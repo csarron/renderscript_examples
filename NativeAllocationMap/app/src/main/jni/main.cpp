@@ -32,4 +32,40 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeExtraction(JNIEnv
     return output;
 }
 
+// Section to test the call to a kernel from NDK side
+
+// Includes our custom loading function
+#include "script.h"
+
+JNIEXPORT void JNICALL
+Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *env, jobject,
+                                                                      jlong ContextID,
+                                                                      jlong ScriptID,
+                                                                      jlong AllocationInID,
+                                                                      jlong AllocationOutID) {
+
+    // Loads libRS.so library and finds rsScriptForEach function address
+    loadLibRS();
+
+    // Invoke forEach for our kernel "sum2", that has slot 2 (as it is the second, non "root" named, declared function).
+    int kernelSlot = 2;
+
+    // All the following fields can be obtained using reflection:
+    //
+    // * ContextID is the pointer to a Java RenderScript.mContext private field.
+    // * ScriptID is the pointer to a Java ScriptC.mID private field.
+    // * AllocationInID is the pointer to a Java Allocation.mID private field.
+    // * AllocationOutID is the pointer to a Java Allocation.mID private field.
+    // * kernelSlot is the slot index of wanted kernel function. This slot can be
+    //		seen inside a script's auto-generated code, like the row:
+    //
+    // 		private final static int mExportForEachIdx_myKernelName = 1;
+
+    rsScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
+                    (void *) AllocationOutID, 0, 0, 0, 0);
+
+    // Wait for the kernel to end its operations
+    rsContextFinish((void *) ContextID);
+}
+
 }

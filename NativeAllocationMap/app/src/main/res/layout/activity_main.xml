@@ -54,4 +54,12 @@
         android:id="@+id/textViewNDK"
         android:layout_below="@+id/textViewJava"
         android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:id="@+id/textViewNativeForEach"
+        android:layout_below="@+id/textViewNDK"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>

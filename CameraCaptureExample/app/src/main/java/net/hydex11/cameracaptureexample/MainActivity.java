@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         textureView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MainActivity.this.finish(); // Terminates app when surface is clicked
+                System.exit(0); // Terminates app when surface is clicked
             }
         });
 
