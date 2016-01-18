@@ -27,6 +27,11 @@ int (*rsScriptForEach)(void *, void *, int, void *, void *, void *, int, void *,
 // Declaration of RS finish function pointer. Its only argument is RS context pointer.
 int (*rsContextFinish)(void *);
 
+// Function to set a script's integer value.
+// Actual declaration: https://android.googlesource.com/platform/frameworks/rs/+/jb-mr2-release/rsScript.cpp#211
+// void rsi_ScriptSetVarI(Context *rsc, RsScript vs, uint32_t slot, int value)
+int (*rsScriptSetVarI)(void *, void *, int, int);
+
 void loadLibRS() {
 
     // Loads libRS.so headers to find function address.
@@ -36,6 +41,7 @@ void loadLibRS() {
     // Loads functions into our variable
     *(void **) (&rsScriptForEach) = dlsym(libRShandle, "rsScriptForEach");
     *(void **) (&rsContextFinish) = dlsym(libRShandle, "rsContextFinish");
+    *(void **) (&rsScriptSetVarI) = dlsym(libRShandle, "rsScriptSetVarI");
 }
 
 #endif //NATIVEALLOCATIONMAP_SCRIPT_H

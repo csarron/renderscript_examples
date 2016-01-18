@@ -10,7 +10,7 @@ typedef struct MyElement {
 
     int x;
     int y;
-    bool isValid;
+    bool simpleBool;
 
 } MyElement_t;
 
@@ -20,7 +20,7 @@ MyElement_t __attribute__((kernel)) initializeMyElements(uint32_t x) {
 
     el.x = x;
     el.y = x + 2;
-    el.isValid = x % 2 == 0;
+    el.simpleBool = x % 2 == 0;
 
     return el;
 }
@@ -28,6 +28,6 @@ MyElement_t __attribute__((kernel)) initializeMyElements(uint32_t x) {
 // Kernel that debugs Allocation
 void __attribute__((kernel)) debugAllocation(MyElement_t in) {
 
-rsDebug("My custom Element", in.x, in.y, in.isValid);
+rsDebug("Element", in.x, in.y, in.simpleBool);
 
 }

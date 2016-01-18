@@ -27,6 +27,10 @@ package net.hydex11.surfacerenderexample;
 import android.graphics.SurfaceTexture;
 
 //import android.renderscript.*;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.support.v8.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -34,6 +38,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 
 /*
 * SurfaceRenderExample shows how to use a surface (in this case a TextureView) to display
@@ -43,9 +48,12 @@ import android.view.View;
 * vertical screen-axis acceleration.
 *
 * */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     static final String TAG = "SurfaceRenderExample";
+
+    private SensorManager sensorManager;
+    private Sensor sensorAccelerometer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +68,14 @@ public class MainActivity extends AppCompatActivity {
     Thread rsLoop;
 
     private void example() {
+        // Prevent window dimming
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Initialize accelerometer
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        sensorAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorManager.registerListener(this, sensorAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
         // Initializes RenderScript context
         initRenderScript();
 
@@ -177,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
                         // Waits for current calculation to end, by sleeping
                         try {
-                            Thread.sleep(20, 0);
+                            Thread.sleep(1, 0);
                         } catch (InterruptedException e) {
                             // Can be caused by touching the surface, as we will be ending this
                             // Thread in a bad manner
@@ -207,5 +223,56 @@ public class MainActivity extends AppCompatActivity {
 
         // Tells the environment that a new calculation can start
         isProcessing = false;
+    }
+
+
+    // Handle gravity vector changes
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(sensorManager!= null)
+            sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(sensorManager!=null)
+            sensorManager.registerListener(this,sensorAccelerometer,SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    static final float accG = 9.81f;
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        Sensor evtSensor = event.sensor;
+
+        if(evtSensor.getType()==Sensor.TYPE_ACCELEROMETER)
+        {
+            double x = event.values[0];
+            double y = event.values[1];
+
+            double maxValue = Math.sqrt(x*x+y*y);
+
+            double xDiv = x/maxValue;
+            double yDiv = y/maxValue;
+
+            double angle = Math.atan(yDiv/xDiv) + (x < 0 ? Math.PI : 0);
+
+            float accY = accG*(float)Math.sin(angle);
+            float accX = -accG*(float)Math.cos(angle);
+
+            if(scriptMain != null) {
+                scriptMain.set_accY((float) accY);
+                scriptMain.set_accX((float) accX);
+            }
+
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }

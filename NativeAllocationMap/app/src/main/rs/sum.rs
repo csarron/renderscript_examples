@@ -9,7 +9,9 @@ uchar __attribute__((kernel)) sum1(uchar in, uint32_t x) {
     return in + 1;
 }
 
+int ndkSumAmount = 0;
+
 // Kernel that will be called directly from NDK side
 uchar __attribute__((kernel)) sum2(uchar in, uint32_t x) {
-    return in + 5;
+    return in + ndkSumAmount;
 }

@@ -30,12 +30,11 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.colornormalizationexample"
-        minSdkVersion 8
+        minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        renderscriptTargetApi 8
-renderscriptSupportModeEnabled true
+        renderscriptTargetApi 18
     }
     buildTypes {
         release {

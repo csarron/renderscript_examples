@@ -50,6 +50,11 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
     // Invoke forEach for our kernel "sum2", that has slot 2 (as it is the second, non "root" named, declared function).
     int kernelSlot = 2;
 
+    // We want to modify the ndkSumAmount variable content. It occupies slot 0, as it is the first
+    // variable declared in the script.
+    int variableSlot = 0;
+    int newValue = 5;
+
     // All the following fields can be obtained using reflection:
     //
     // * ContextID is the pointer to a Java RenderScript.mContext private field.
@@ -60,6 +65,12 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
     //		seen inside a script's auto-generated code, like the row:
     //
     // 		private final static int mExportForEachIdx_myKernelName = 1;
+    //
+    // * variableSlot is the slot index of script's non-static variable:
+    //
+    //      private final static int mExportVarIdx_ndkSumAmount = 0;
+
+    rsScriptSetVarI((void *) ContextID, (void *) ScriptID, variableSlot, newValue);
 
     rsScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
                     (void *) AllocationOutID, 0, 0, 0, 0);

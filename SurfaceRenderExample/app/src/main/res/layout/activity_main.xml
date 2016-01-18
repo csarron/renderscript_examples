@@ -40,4 +40,14 @@
         android:id="@+id/textureView"
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Touch to close"
+        android:id="@+id/textView3"
+        android:textColor="#00ff00"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

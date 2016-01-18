@@ -24,10 +24,11 @@
 
 package net.hydex11.customelementexample;
 
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.TextView;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +40,19 @@ public class MainActivity extends AppCompatActivity {
         example();
     }
 
+    boolean exampleRan = false;
+    LogView logView;
     void example(){
+
+        if(exampleRan)return;
+        exampleRan=true;
+
+        // Add custom automated filter logging view
+        logView = new LogView(this, new String[]{"RenderScript"});
+        logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.myLayout);
+        relativeLayout.addView(logView);
 
         // Instantiates new RS Context
         RenderScript mRS = RenderScript.create(this);
@@ -56,5 +69,13 @@ public class MainActivity extends AppCompatActivity {
         main.forEach_debugAllocation(myElementsAllocation);
 
         // Debug is visible inside logcat under "My custom Element" string
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(logView != null)
+            logView.destroy();
+
+        super.onDestroy();
     }
 }

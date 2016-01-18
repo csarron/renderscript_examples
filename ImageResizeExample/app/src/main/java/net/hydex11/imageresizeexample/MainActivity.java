@@ -27,7 +27,7 @@ package net.hydex11.imageresizeexample;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Display;
@@ -66,12 +66,9 @@ public class MainActivity extends AppCompatActivity {
 
         Allocation inputAllocation = Allocation.createFromBitmap(mRS, inputImage);
 
-        // Output image will be wide as the screen and will scale proportionally
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
+        // Output image will be wide half the original
 
-        int outputWidth = size.x;
+        int outputWidth = inputWidth/2;
         int outputHeight = (int) ((float) outputWidth * ((float) inputHeight / (float) inputWidth));
 
         // Bitmaps that will handle the output

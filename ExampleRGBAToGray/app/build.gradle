@@ -30,10 +30,9 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.examplergbatogray"
-        minSdkVersion 8
+        minSdkVersion 18
 
-        renderscriptTargetApi 8
-        renderscriptSupportModeEnabled true
+        renderscriptTargetApi 18
 
         targetSdkVersion 23
         versionCode 1

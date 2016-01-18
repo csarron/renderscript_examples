@@ -22,4 +22,4 @@
  * SOFTWARE.
  */
 
-include ':app', ':rssupportiowrapper-release'
+include ':app'

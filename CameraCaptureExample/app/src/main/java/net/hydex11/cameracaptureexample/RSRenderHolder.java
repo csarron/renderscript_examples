@@ -28,11 +28,9 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 
-//import android.renderscript.*;
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 
 /**
  * Created by Alberto on 28/12/2015.

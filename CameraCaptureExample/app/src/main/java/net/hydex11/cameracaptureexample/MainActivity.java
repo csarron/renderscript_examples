@@ -24,18 +24,17 @@
 
 package net.hydex11.cameracaptureexample;
 
-//import android.renderscript.*;
-
-import android.support.v8.renderscript.*;
+import android.app.Activity;
+import android.renderscript.*;
 import android.graphics.Point;
 import android.hardware.Camera;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 
 /*
 * This example application shows how it is possible to use camera preview image to perform
@@ -60,7 +59,7 @@ import android.view.View;
 * Program will terminate when screen is touched (so when upper surface is touched)
 *
 * */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     static final String TAG = "CameraCaptureExample";
 
@@ -80,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     RSRenderHolder rsRenderHolder;
 
     private void example() {
+        // Prevent window dimming
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Here we use the camera preview as below surface and rendering surface as upper one
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceView);

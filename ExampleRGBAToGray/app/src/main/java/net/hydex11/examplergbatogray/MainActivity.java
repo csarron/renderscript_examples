@@ -28,7 +28,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 

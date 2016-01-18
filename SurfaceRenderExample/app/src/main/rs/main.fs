@@ -11,6 +11,10 @@ int renderAllocationWidth;
 int renderAllocationHeight;
 
 const float gy = 9.81f; // Constant value for vertical acceleration in pixels/second^2
+// Angle is 0 on x-axis, ccw. Default is towards bottom, 270 deg.
+float accY = 0;
+float accX = 0;
+
 const static uchar4 black = {0,0,0,255}; // Base pixel, used to clean the screen
 
 // Creates a custom particle structure
@@ -95,7 +99,9 @@ Particle_t __attribute__((kernel)) drawParticles(Particle_t in, uint32_t x) {
         in.y += in.vy * elapsedTime;
 
         // Updates vertical speed accordingly to acceleration
-        in.vy += 2*gy*elapsedTime;
+        // Y acceleration is positive towards bottom of screen
+        in.vy += 2*accY*elapsedTime;
+        in.vx += 2*accX*elapsedTime;
 
         in.lastUpdateTime = currentTime;
     }

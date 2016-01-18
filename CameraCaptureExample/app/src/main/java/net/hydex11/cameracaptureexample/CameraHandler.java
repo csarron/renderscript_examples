@@ -122,8 +122,13 @@ public class CameraHandler {
 
     public void destroy() {
         if (mCamera != null) {
+            mCamera.stopPreview();
             mCamera.release();
         }
+    }
+
+    public Camera.Parameters getCameraParameters() {
+        return mCameraParameters;
     }
 
     // Utils

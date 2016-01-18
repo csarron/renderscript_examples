@@ -24,9 +24,11 @@
 
 package net.hydex11.customjavaelementexample;
 
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,6 +41,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void example() {
+
+        LogView logView = new LogView(this, "RenderScript");
+        logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.myLayout);
+        relativeLayout.addView(logView);
+
         // Instantiates new RS Context
         RenderScript mRS = RenderScript.create(this);
 

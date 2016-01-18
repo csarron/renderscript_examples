@@ -30,12 +30,11 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.customelementexample"
-        minSdkVersion 8
+        minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        renderscriptTargetApi 8
-        renderscriptSupportModeEnabled true
+        renderscriptTargetApi 18
     }
     buildTypes {
         release {
@@ -47,6 +46,5 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
