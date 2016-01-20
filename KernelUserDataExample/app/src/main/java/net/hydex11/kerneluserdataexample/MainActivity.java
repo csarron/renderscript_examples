@@ -30,6 +30,9 @@ import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
+
 import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +48,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void example() {
+        // Add custom automated filter logging view
+        LogView logView = new LogView(this, TAG);
+        logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout);
+        relativeLayout.addView(logView);
+
         // Instantiates RS context and our script
         RenderScript mRS = RenderScript.create(this);
         ScriptC_main myScript = new ScriptC_main(mRS);

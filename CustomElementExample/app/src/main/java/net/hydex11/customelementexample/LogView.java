@@ -68,6 +68,21 @@ public class LogView extends ScrollView {
 
         Log.d(TAG, "Instantiated new LogView");
 
+        // If is first run in entire program execution, cleans LogCat output, so that
+        // we do not get previous executions lines.
+        try {
+            if (firstRun) {
+                Process logCatCleanProcess = null;
+                logCatCleanProcess = Runtime.getRuntime().exec("logcat -c");
+                logCatCleanProcess.waitFor();
+                firstRun = false;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // Only log rows that contains this filter are shown.
         // For this example, simple filtering is applied (only single-line rows are counted)
         logFilters = filters;
@@ -114,14 +129,6 @@ public class LogView extends ScrollView {
 
         try {
 
-            // If is first run in entire program execution, cleans LogCat output, so that
-            // we do not get previous executions lines.
-            if (firstRun) {
-                Process logCatCleanProcess = Runtime.getRuntime().exec("logcat -c");
-                logCatCleanProcess.waitFor();
-                firstRun = false;
-            }
-
             String appId = getContext().getResources().getString(R.string.app_name);
 
             // Info from: http://stackoverflow.com/questions/19897628/need-to-handle-uncaught-exception-and-send-log-file
@@ -146,8 +153,6 @@ public class LogView extends ScrollView {
 
             bufferedReader.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

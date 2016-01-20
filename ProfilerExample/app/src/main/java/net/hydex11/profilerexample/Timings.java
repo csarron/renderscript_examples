@@ -33,6 +33,7 @@ import java.util.HashMap;
  * Created by Alberto on 02/01/2016.
  */
 public class Timings {
+    public static final String TAG = "Timings";
 
     // Timestamp got on last addTiming call
     private long lastTimingsTimestamp = 0;

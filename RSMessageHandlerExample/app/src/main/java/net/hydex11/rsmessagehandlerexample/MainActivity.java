@@ -24,12 +24,15 @@
 
 package net.hydex11.rsmessagehandlerexample;
 
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.widget.TextView;
+import android.util.Log;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MessageHandlerExample";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,10 +57,7 @@ public class MainActivity extends AppCompatActivity {
                     // Notice usage of intBitsToFloat to cast integer to float
                     float f = Float.intBitsToFloat(mData[3]);
 
-                    TextView textView = (TextView) findViewById(R.id.textView);
-
-                    String outStr = String.format("x: %d, y: %d, bool: %d, float: %f", x, y, myBool ? 1 : 0, f);
-                    textView.setText(outStr);
+                    Log.d(TAG, String.format("x: %d, y: %d, bool: %d, float: %f", x, y, myBool ? 1 : 0, f));
                 }
                 break;
                 default:
@@ -68,6 +68,14 @@ public class MainActivity extends AppCompatActivity {
     };
 
     void example() {
+
+
+        // Add custom automated filter logging view
+        LogView logView = new LogView(this, TAG);
+        logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout);
+        relativeLayout.addView(logView);
 
         RenderScript mRS = RenderScript.create(this);
         mRS.setMessageHandler(myHandler);

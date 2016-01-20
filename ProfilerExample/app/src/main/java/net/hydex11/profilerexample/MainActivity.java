@@ -26,11 +26,13 @@ package net.hydex11.profilerexample;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v8.renderscript.*;
+import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,6 +48,14 @@ public class MainActivity extends AppCompatActivity {
     Thread exampleThread;
 
     private void example() {
+
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
+
+        // Create a view to see LogCat log
+        LogView logView = new LogView(this, Timings.TAG);
+        logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        linearLayout.addView(logView);
 
         // Set the only view button to kill our application
         Button endMe = (Button) findViewById(R.id.button);

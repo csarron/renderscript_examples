@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package net.hydex11.customjavaelementexample;
+package net.hydex11.rsmessagehandlerexample;
 
 import android.content.Context;
 import android.graphics.Color;
