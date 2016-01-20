@@ -36,6 +36,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
@@ -81,17 +83,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         // Here we get our TextureView, and apply a hack (setScaleX) to enable smoothing of the
         // final output image
-        TextureView textureView = (TextureView) findViewById(R.id.textureView);
-        textureView.setScaleX(1.00001f);
+        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
 
         // Sets surface callback, to understand when the surface will be available
-        textureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        surfaceView.getHolder().addCallback(mSurfaceViewCallback);
 
-        textureView.setOnClickListener(new View.OnClickListener() {
+        surfaceView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // After touching the surface, application will end.
-                if(rsLoop != null)
+                if (rsLoop != null)
                     rsLoop.interrupt();
 
                 System.exit(0);
@@ -99,29 +100,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
     }
 
-    TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
+    SurfaceHolder.Callback mSurfaceViewCallback = new SurfaceHolder.Callback() {
         @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        public void surfaceCreated(SurfaceHolder holder) {
             Log.d(TAG, "Preview surface created");
 
-            // Once the surface is initialized, we can tell output Allocation to use it
-            renderAllocation.setSurface(new Surface(surface));
+            Surface surface = holder.getSurface();
 
-            // Initializes the processing endless loop
+            renderAllocation.setSurface(surface);
+
             RSLoop();
         }
 
         @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
         }
 
         @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            return false;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        public void surfaceDestroyed(SurfaceHolder holder) {
 
         }
     };
@@ -227,8 +224,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
 
     // Handle gravity vector changes
-
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -258,11 +253,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             double xDiv = x/maxValue;
             double yDiv = y/maxValue;
 
+            // Calculates new falling angle
             double angle = Math.atan(yDiv/xDiv) + (x < 0 ? Math.PI : 0);
 
             float accY = accG*(float)Math.sin(angle);
             float accX = -accG*(float)Math.cos(angle);
 
+            // Push new angle data to RS
             if(scriptMain != null) {
                 scriptMain.set_accY((float) accY);
                 scriptMain.set_accX((float) accX);
