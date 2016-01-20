@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/DynamicBitcodeLoaderExample.iml" filepath="$PROJECT_DIR$/DynamicBitcodeLoaderExample.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rslibrary/rslibrary.iml" filepath="$PROJECT_DIR$/rslibrary/rslibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rsscriptparser/rsscriptparser.iml" filepath="$PROJECT_DIR$/rsscriptparser/rsscriptparser.iml" />
+    </modules>
+  </component>
+</project>
