@@ -94,7 +94,7 @@ public class LogView extends ScrollView {
         setPadding(5, 5, 5, 5);
 
         logTextView.setTextColor(Color.GREEN);
-        logTextView.setTextSize(12);
+        logTextView.setTextSize(10);
         logTextView.setTypeface(Typeface.MONOSPACE);
 
         // Fill container (scrolling one)
@@ -157,7 +157,7 @@ public class LogView extends ScrollView {
         }
     }
 
-    final String logBeginRegex = "^(.*)([DIEWVA]/\\w+\\s*(?:\\(\\s*\\d+\\s*\\))?:\\s*.*)$";
+    final String logBeginRegex = "^(?:.*)([DIEWVA]/\\w+)\\s*(?:\\(\\s*\\d+\\s*\\))?:\\s*(.*)$";
     Pattern logBeginPattern = Pattern.compile(logBeginRegex);
 
     private void evaluateLogLine(String logLine) {
@@ -183,7 +183,8 @@ public class LogView extends ScrollView {
         }
 
         // Get actual message
-        logLine = logBeginMatcher.group(logBeginMatcher.groupCount());
+        String logTag = logBeginMatcher.group(1);
+        logLine = logTag + ": " + logBeginMatcher.group(logBeginMatcher.groupCount());
 
         if (logFilters == null) {
             threadedAddLogLine(logLine);

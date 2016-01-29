@@ -27,21 +27,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.hydex11.profilerexample.MainActivity">
+    tools:context="net.hydex11.fastexample.MainActivity">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="End!"
-        android:id="@+id/button"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true" />
-
-    <LinearLayout
-        android:orientation="vertical"
+    <SurfaceView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_alignParentStart="true"
-        android:id="@+id/linearLayout"
-        android:layout_above="@+id/button"></LinearLayout>
+        android:id="@+id/surfaceView"
+        android:layout_centerInParent="true" />
+
+    <TextureView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/textureView"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Touch to close"
+        android:id="@+id/textView2"
+        android:textColor="#00ff00"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

@@ -55,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         LogView logView = new LogView(this, Timings.TAG);
         logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
+
         linearLayout.addView(logView);
 
         // Set the only view button to kill our application
@@ -99,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
+                // Averaging will run every 10 cycles
+                timings.setTimingDebugInterval(10);
+
                 // We create two different scripts, that has same kernels. First one is
                 // standard RenderScript, second one uses FilterScript approach. This way
                 // you can see differences in performance (please use an high end device to
@@ -106,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
                 ScriptC_main main = new ScriptC_main(mRS);
                 ScriptC_main_fs main_fs = new ScriptC_main_fs(mRS);
 
-                main.set_in(inputAllocation);
-                main_fs.set_in(inputAllocation);
+                main.set_inputAllocation(inputAllocation);
+                main_fs.set_inputAllocation(inputAllocation);
 
                 main.set_width(inputBitmap.getWidth());
                 main.set_height(inputBitmap.getHeight());
@@ -122,12 +127,63 @@ public class MainActivity extends AppCompatActivity {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
 
-                    main.forEach_root(outputAllocation);
-                    // Adds timing for kernel
-                    timings.addTiming("blur - RenderScript");
+                    // Here we set the launch options for the kernels, to prevent the
+                    // blur pointers from overflowing
+                    Script.LaunchOptions launchOptions = new Script.LaunchOptions();
 
-                    main_fs.forEach_root(outputAllocation);
-                    timings.addTiming("blur - FilterScript");
+                    // Here we test three different sets of kernels, increasing the blur radius.
+                    // The more it gets high, the more neighbor elements are accessed in the process.
+
+                    // Blur 3x3
+                    int blurRadius = 1;
+                    main.set_blurRadius(blurRadius);
+                    main_fs.set_blurRadius(blurRadius);
+                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
+                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+
+                    // Adds timing for kernel
+                    main.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur3x3 - RenderScript");
+
+                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
+                    timings.addTiming("blur3x3 - RenderScript (pointers)");
+
+                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur3x3 - FilterScript");
+
+                    // Blur 7x7
+                    blurRadius = 3;
+                    main.set_blurRadius(blurRadius);
+                    main_fs.set_blurRadius(blurRadius);
+                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
+                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+
+                    // Adds timing for kernel
+                    main.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur7x7 - RenderScript");
+
+                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
+                    timings.addTiming("blur7x7 - RenderScript (pointers)");
+
+                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur7x7 - FilterScript");
+
+                    // Blur 15x15
+                    blurRadius = 7;
+                    main.set_blurRadius(blurRadius);
+                    main_fs.set_blurRadius(blurRadius);
+                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
+                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+
+                    // Adds timing for kernel
+                    main.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur15x15 - RenderScript");
+
+                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
+                    timings.addTiming("blur15x15 - RenderScript (pointers)");
+
+                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    timings.addTiming("blur15x15 - FilterScript");
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
                     // in case it is.
@@ -135,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
                     try {
                         // Small wait, to not overkill the CPU/GPU
-                        Thread.sleep(10,0);
+                        Thread.sleep(10, 0);
                     } catch (InterruptedException e) {
                         // Will be caused by clicking on "End" button, as we will be interrupting
                         // this Thread brutally

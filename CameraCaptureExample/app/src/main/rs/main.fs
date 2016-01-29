@@ -30,8 +30,8 @@ uchar4 __attribute__((kernel)) root(uint32_t x, uint32_t y) {
     o o o o o <- scaled size
     */
 
-    int fX = rsClamp(round((float)x * scaleInv), 0,sizeIn.x);
-    int fY = rsClamp(round((float)y * scaleInv), 0,sizeIn.y);
+    int fX = (int) clamp(round((float)x * scaleInv), 0.0f,(float)sizeIn.x);
+    int fY = (int) clamp(round((float)y * scaleInv), 0.0f,(float)sizeIn.y);
 
     // Our script will make every pixel enough "bright" to appear red!
     // We use gray conversion constants to get brightness value.
