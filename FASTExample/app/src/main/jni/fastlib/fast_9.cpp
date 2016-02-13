@@ -2,6 +2,7 @@
 //#include <stdlib.h>
 #include "fast.h"
 #include <omp.h>
+#include "harris.h"
 
 static void make_offsets(int pixel[], int row_stride) {
     pixel[0] = 0 + row_stride * 3;
@@ -22,7 +23,7 @@ static void make_offsets(int pixel[], int row_stride) {
     pixel[15] = -1 + row_stride * 3;
 }
 
-xy *fast9_detect(const byte *im, int xsize, int ysize, int stride, int b, int *ret_num_corners) {
+xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num_corners) {
     int num_corners = 0;
     xy *ret_corners;
     int rsize = 512;
@@ -35,9 +36,9 @@ xy *fast9_detect(const byte *im, int xsize, int ysize, int stride, int b, int *r
     //omp_set_num_threads(4);
 
 #pragma omp parallel for
-    for (y = 3; y < ysize - 3; y++)
-        for (x = 3; x < xsize - 3; x++) {
-            const byte *p = im + y * stride + x;
+    for (y = 4; y < ysize - 4; y++)
+        for (x = 4; x < xsize - 4; x++) {
+            byte *p = im + x + y * stride;
 
             int cb = *p + b;
             int c_b = *p - b;
@@ -2259,6 +2260,9 @@ xy *fast9_detect(const byte *im, int xsize, int ysize, int stride, int b, int *r
 //            }
 //            ret_corners[num_corners].x = x;
 //            ret_corners[num_corners].y = y;
+
+            uchar harrisScore = calculateHarrisScore(p, stride);
+
             num_corners++;
 
         }

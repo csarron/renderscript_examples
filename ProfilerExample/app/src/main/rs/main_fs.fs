@@ -9,20 +9,44 @@
 int blurRadius = 3;
 
 rs_allocation inputAllocation;
+rs_allocation outputAllocation;
 
 uint32_t width;
 uint32_t height;
 
-uchar4 __attribute__((kernel)) root(uint32_t x, uint32_t y) {
+uchar4 __attribute__((kernel)) blurSimpleKernel(uint32_t x, uint32_t y) {
     uint4 sum = 0;
     uint count = 0;
     for (int yi = y-blurRadius; yi <= y+blurRadius; ++yi) {
         for (int xi = x-blurRadius; xi <= x+blurRadius; ++xi) {
-            if (xi >= 0 && xi < width && yi >= 0 && yi < height) {
-                sum += convert_uint4(rsGetElementAt_uchar4(inputAllocation, xi, yi));
+                sum += convert_uint4(rsGetElementAt_uchar4(inputAllocation, x+xi, y+yi));
                 ++count;
-            }
         }
     }
     return convert_uchar4(sum/count);
+}
+
+const static float3 grayMultipliers = {0.299f, 0.587f, 0.114f};
+
+// The following function presents a standard way to peroform in/out
+// operations on Allocation having different Types.
+uchar __attribute__((kernel)) rgbaToGrayNoPointer(uchar4 in, uint32_t x, uint32_t y) {
+
+    uchar out;
+
+    out = (uchar) ((float)in.r*grayMultipliers.r) +
+            ((float)in.g*grayMultipliers.g) +
+          ((float)in.b*grayMultipliers.b);
+
+   return out;
+}
+
+// Set tons of values, using radius blur
+void __attribute__((kernel)) setValuesSimpleKernel(uchar4 in, int x, int y){
+    for(int yi = -blurRadius; yi <= blurRadius; ++yi)
+        {
+            for (int xi = -blurRadius; xi <= blurRadius; ++xi) {
+                rsSetElementAt_uchar4(outputAllocation, in, x+xi, y+yi);
+            }
+        }
 }

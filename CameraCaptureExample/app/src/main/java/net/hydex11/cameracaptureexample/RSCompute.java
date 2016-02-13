@@ -93,8 +93,9 @@ public class RSCompute {
         int expectedBytes = inputImageSize.x * inputImageSize.y *
                 ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
 
-        Type.Builder yuvType = new Type.Builder(mRS, Element.U8(mRS)).setX(expectedBytes);
-        inputAllocation = Allocation.createTyped(mRS, yuvType.create(), Allocation.USAGE_SCRIPT);
+        Type.Builder yuvTypeBuilder = new Type.Builder(mRS, Element.U8(mRS)).setX(expectedBytes);
+        Type yuvType = yuvTypeBuilder.create();
+        inputAllocation = Allocation.createTyped(mRS, yuvType, Allocation.USAGE_SCRIPT);
 
         // Creates temporary allocation that will match camera preview size
         Type.Builder rgbaType = new Type.Builder(mRS, Element.RGBA_8888(mRS)).setX(mInputImageSize.x).setY(mInputImageSize.y);

@@ -35,7 +35,6 @@ import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -63,21 +62,40 @@ public class MainActivity extends AppCompatActivity {
     Surface rsResultSurface;
 
     private void example() {
+        // To calculate the timings' average on a different measurements set size, change
+        // the following instruction
+        timings.setTimingDebugInterval(200);
+
         // Prevent window dimming
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // We load the NDK library we created. This library's code can be seen
+        // inside app/src/main/jni folder. Its compiling cannot be done using
+        // Android Studio default NDK build system, as it cannot include custom
+        // CPP flags (we include the OpenMP library).
+        // Please refer to the app/build.gradle file (last section of it) to understand
+        // how the build process works.
         System.loadLibrary("native");
 
+        // We instantiate the surfaces, camera preview one and RenderScript
+        // preview one.
         cameraPreviewSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         rsResultTextureView = (TextureView) findViewById(R.id.textureView);
 
+        // Instantiation of surfaces' callbacks, to trigger the execution of our
+        // example.
         cameraPreviewSurfaceView.getHolder().addCallback(cameraPreviewCallback);
         rsResultTextureView.setSurfaceTextureListener(surfaceTextureListener);
 
+        // As we are using a forced landscape mode (look at AndroidManifest.xml file),
+        // we need the TextureView to rotate accordingly.
         rsResultTextureView.requestLayout();
         rsResultTextureView.invalidate();
+
+        // Set the TextureView to use alpha channel, as it is overlapping the camera preview.
         rsResultTextureView.setOpaque(false);
 
+        // Exit on surface touch
         rsResultTextureView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,13 +104,16 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // This function gets called by surfaces' callbacks, as the surfaces become ready.
     private void checkSurfaces() {
         if (cameraPreviewSurfaceHolder != null && rsResultSurface != null) {
-            // As surfaces are ready, we can instantiate camera
+            // As surfaces are ready, we can instantiate the camera
             CameraHandler.CameraSetup cameraSetup = new CameraHandler.CameraSetup();
             cameraSetup.setMaxPreviewSize(new Point(1280, 720));
             cameraSetup.setCameraBuffersCount(1);
             cameraSetup.setPreviewSurfaceHolder(cameraPreviewSurfaceHolder);
+
+            // Function that gets called every time there is a camera frame available.
             cameraSetup.setPreviewCallback(previewCallback);
 
             cameraHandler = new CameraHandler(this);
@@ -102,16 +123,10 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
 
+            // Initialize RenderScript
             instantiateRS();
         }
     }
-
-//    // OpenCV variables
-//    OpenCVHolder openCVHolder;
-//    byte grayOpenCVData[];
-
-    // JNI FAST library array
-    byte grayData[];
 
     // RS variables
     RenderScript mRS;
@@ -121,13 +136,21 @@ public class MainActivity extends AppCompatActivity {
     Allocation inputAllocation;
     Allocation rgbAllocation;
     Allocation grayAllocation;
-    Allocation fastKpAllocation;
-    Allocation outputAllocation;
+    Allocation fastKpAllocation; // Allocation where to store the detected keypoints
+    Allocation outputAllocation; // Allocation where to display detected keypoints
 
     // Scripts
     ScriptIntrinsicYuvToRGB scriptIntrinsicYuvToRGB;
+
+    // This script contains a FAST detector written without any possible optimization,
+    // to simply display how the detection process works at the root.
     ScriptC_fast_no_optimization scriptCFastNoOptimization;
+
+    // This script contains a FAST detector, whose code has been ported directly from the official
+    // FAST detection library (http://www.edwardrosten.com/work/fast.html).
     ScriptC_fast scriptCFast;
+
+    // Script that contains conversion to gray image and a function to display the detected keypoints.
     ScriptC_util scriptCUtil;
 
     // LaunchOptions
@@ -138,49 +161,60 @@ public class MainActivity extends AppCompatActivity {
 
         inputImageSize = cameraHandler.getCameraSize();
 
-        // Initialize OpenCV
-//        openCVHolder = new OpenCVHolder(this, inputImageSize.width, inputImageSize.height);
-//        grayOpenCVData = new byte[inputImageSize.width * inputImageSize.height];
-
-        // Initialize holder for JNI FAST extraction implementation
+        // Initialize holder for NDK FAST extraction implementation
         setImageSize(inputImageSize.width, inputImageSize.height);
-        grayData = new byte[inputImageSize.width * inputImageSize.height];
 
+//        // JNI FAST library array. This variable is used to temporarily store
+//        // the gray image, to be passed to the NDK FAST library for extraction.
+//        byte grayData[];
+//        grayData = new byte[inputImageSize.width * inputImageSize.height];
+
+        // Initialize RenderScript scripts
         scriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(mRS, Element.RGBA_8888(mRS));
         scriptCFastNoOptimization = new ScriptC_fast_no_optimization(mRS);
         scriptCFast = new ScriptC_fast(mRS);
         scriptCUtil = new ScriptC_util(mRS);
 
+        // Build type for YUV input image
         Type.Builder tb;
         tb = new Type.Builder(mRS, Element.createPixel(mRS, Element.DataType.UNSIGNED_8, Element.DataKind.PIXEL_YUV));
         tb.setX(inputImageSize.width);
         tb.setY(inputImageSize.height);
         tb.setYuvFormat(android.graphics.ImageFormat.NV21);
 
+        // Create input allocation, that will receive the camera frame
         inputAllocation = Allocation.createTyped(mRS, tb.create(), Allocation.USAGE_SCRIPT);
         scriptIntrinsicYuvToRGB.setInput(inputAllocation);
 
+        // Build type for converted image (YUV to RGBA)
         tb = new Type.Builder(mRS, Element.RGBA_8888(mRS)).setX(inputImageSize.width).setY(inputImageSize.height);
         Type rgbaType = tb.create();
+        // Build type for converted image (RGBA to GRAY)
         tb = new Type.Builder(mRS, Element.U8(mRS)).setX(inputImageSize.width).setY(inputImageSize.height);
         Type grayType = tb.create();
 
+        // Define all allocations
         rgbAllocation = Allocation.createTyped(mRS, rgbaType, Allocation.USAGE_SCRIPT);
         grayAllocation = Allocation.createTyped(mRS, grayType, Allocation.USAGE_SCRIPT);
         fastKpAllocation = Allocation.createTyped(mRS, grayType, Allocation.USAGE_SCRIPT);
         outputAllocation = Allocation.createTyped(mRS, rgbaType, Allocation.USAGE_SCRIPT | Allocation.USAGE_IO_OUTPUT);
+
+        // Tells the output allocation which surface is its
         outputAllocation.setSurface(rsResultSurface);
 
-        scriptCUtil.set_rgbAllocation(rgbAllocation);
-        scriptCUtil.set_fastKpAllocation(fastKpAllocation);
-
+        // Prepare RS scripts
         scriptCFastNoOptimization.set_grayAllocation(grayAllocation);
         scriptCFast.invoke_makeOffsets(inputImageSize.width);
 
+        // Defines limits for RS kernels execution, as FAST extraction requires
+        // a border of 3 pixels to operate and harris score requires 4 of them, so
+        // the maximum is chosen.
         fastLaunchOptions = new Script.LaunchOptions();
-        fastLaunchOptions.setX(3, inputImageSize.width - 4);
-        fastLaunchOptions.setY(3, inputImageSize.height - 4);
+        fastLaunchOptions.setX(4, inputImageSize.width - 5);
+        fastLaunchOptions.setY(4, inputImageSize.height - 5);
 
+        // Settings this to true tells the camera preview callback that the RS code
+        // can be executed
         rsInstantiated = true;
     }
 
@@ -190,56 +224,63 @@ public class MainActivity extends AppCompatActivity {
         public void onPreviewFrame(byte[] data, Camera camera) {
 
             if (rsInstantiated) {
+                // Clear any previous rs calls
+                mRS.finish();
 
+                // Initialize profiling
                 timings.initTimings();
 
+                // Copy image from camera frame
                 inputAllocation.copyFrom(data);
 
+                // Converts image, YUV -> RGBA -> GRAY
                 scriptIntrinsicYuvToRGB.forEach(rgbAllocation);
-                scriptCUtil.forEach_rgbToGray(grayAllocation);
 
-                // Init OpenCV Mat data
-//                grayAllocation.copyTo(grayOpenCVData);
-
-                grayAllocation.copyTo(grayData);
-
-                mRS.finish();
-                timings.addTiming("Gray conversion completed");
+                //mRS.finish();
+                //timings.addTiming("YUV -> RGBA");
+                scriptCUtil.forEach_rgbaToGray(rgbAllocation, grayAllocation);
+                //mRS.finish();
+                //timings.addTiming("RenderScript gray conversion");
 
                 // RS FAST (not optimized)
-                scriptCFastNoOptimization.forEach_fastNoOptimized(grayAllocation, fastKpAllocation, fastLaunchOptions);
-                mRS.finish();
-                timings.addTiming("RenderScript FAST (no optimization)");
+                // To be used only to understand how FAST extraction works. It has no
+                // optimizations at all. Do not use it for benchmark purposes because it
+                // is terribly slow. Turn to true to enable it.
+                if(false) {
+                    mRS.finish(); // To measure only this execution, this is needed
+                    scriptCFastNoOptimization.forEach_fastNoOptimized(grayAllocation, fastKpAllocation, fastLaunchOptions);
+                    mRS.finish();
+                    timings.addTiming("RenderScript FAST (no optimization)");
+                }
 
                 // RS FAST (optimized)
                 scriptCFast.forEach_fastOptimized(grayAllocation, fastKpAllocation, fastLaunchOptions);
                 mRS.finish();
-                timings.addTiming("RenderScript FAST (optmized)");
+                timings.addTiming("RenderScript FAST (optimized)");
 
                 // FAST library extraction
-                fastLibExtraction(grayData);
-                timings.addTiming("Original FAST lib (optimized)");
 
-                // OpenCV Fast
-//                openCVHolder.parseFrame(timings, grayOpenCVData);
+
+                fastLibExtraction(data);
+                timings.addTiming("Original FAST lib (optimized)");
 
                 timings.debugTimings();
 
-                scriptCUtil.forEach_showFastKeypoints(outputAllocation);
-
+                // Displays keypoints on preview surface
+                scriptCUtil.forEach_showFastKeypoints(fastKpAllocation, outputAllocation);
                 outputAllocation.ioSend();
+                mRS.finish();
 
             }
             camera.addCallbackBuffer(data);
         }
     };
 
-    // JNI FAST LIB extraction
-    // fastLibExtraction(JNIEnv *env, jobject, jint width, jint height, jbyteArray grayDataArray)
+    // NDK FAST library extraction
     private native int setImageSize(int width, int height);
     private native int fastLibExtraction(byte[] data);
 
-    // Callbacks
+    // Surfaces callbacks, to initialize the process
     TextureView.SurfaceTextureListener surfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {

@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
  */
 public class LogView extends ScrollView {
     private static final String TAG = "LogView";
+    private final int logCheckIntervalSeconds;
 
     TextView logTextView;
     String[] logFilters;
@@ -56,15 +57,16 @@ public class LogView extends ScrollView {
 
     public LogView(Context context) {
         // No filtering
-        this(context, (String[]) null);
+        this(context, (String[]) null, 5);
     }
 
-    public LogView(Context context, String filter) {
-        this(context, new String[]{filter});
+    public LogView(Context context, String filter, int logCheckIntervalSeconds) {
+        this(context, new String[]{filter}, logCheckIntervalSeconds);
     }
 
-    public LogView(Context context, String[] filters) {
+    public LogView(Context context, String[] filters, int logCheckIntervalSeconds) {
         super(context);
+        this.logCheckIntervalSeconds = logCheckIntervalSeconds;
 
         Log.d(TAG, "Instantiated new LogView");
 
@@ -114,7 +116,7 @@ public class LogView extends ScrollView {
                 while (canRun) {
                     try {
                         checkForLogs();
-                        Thread.sleep(2500, 0);
+                        Thread.sleep(logCheckIntervalSeconds*1000, 0);
                     } catch (InterruptedException e) {
                         Log.d(TAG, "Closing LogCat check thread");
                         canRun = false;

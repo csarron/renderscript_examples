@@ -5,7 +5,6 @@
 #pragma rs java_package_name(net.hydex11.customelementexample)
 
 // Creates a custom structure
-
 typedef struct MyElement {
 
     int x;
@@ -29,5 +28,9 @@ MyElement_t __attribute__((kernel)) initializeMyElements(uint32_t x) {
 void __attribute__((kernel)) debugAllocation(MyElement_t in) {
 
 rsDebug("Element", in.x, in.y, in.simpleBool);
+
+}
+
+void kernelFunctionName(const uchar2 * v_in, float * v_out, uint32_t x, uint32_t y){
 
 }

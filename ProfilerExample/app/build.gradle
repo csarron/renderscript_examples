@@ -25,13 +25,20 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        debugg {
+            keyAlias 'debugg'
+            keyPassword 'debugg'
+            storeFile file('D:/dev/rsbookexamples/ProfilerExample/debugKeyStore.jks')
+            storePassword 'debugg'
+        }
+    }
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
-
     defaultConfig {
         applicationId "net.hydex11.profilerexample"
         minSdkVersion 18
-        targetSdkVersion 23
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
 
@@ -41,6 +48,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debugg
         }
     }
 }

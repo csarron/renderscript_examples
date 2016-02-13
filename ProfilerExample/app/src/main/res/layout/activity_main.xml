@@ -29,19 +29,34 @@
     android:layout_height="match_parent"
     tools:context="net.hydex11.profilerexample.MainActivity">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="End!"
-        android:id="@+id/button"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true" />
-
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignParentStart="true"
         android:id="@+id/linearLayout"
-        android:layout_above="@+id/button"></LinearLayout>
+        android:layout_above="@+id/linearLayout2"></LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/linearLayout2">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="End!"
+            android:id="@+id/button"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="End and save Stats"
+            android:id="@+id/saveStatsBtn" />
+    </LinearLayout>
+
 </RelativeLayout>

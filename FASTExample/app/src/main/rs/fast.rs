@@ -5,6 +5,8 @@
 // The java_package_name directive needs to use your Activity's package path
 #pragma rs java_package_name(net.hydex11.fastexample)
 
+#include "harris.rsh"
+
 int fastThreshold = 20;
 
 int stride;
@@ -31,7 +33,10 @@ void makeOffsets(int row_stride)
     pixelOffsets[15] = -1 + row_stride * 3;
 }
 
-void  fastOptimized(const uchar * v_in, uchar * v_out)
+// The following code is a direct porting of the original FAST library
+// (http://www.edwardrosten.com/work/fast.html), which is highly optimized, auto
+// generated code.
+void fastOptimized(const uchar * v_in, uchar * v_out)
 {
 
     int cb = *v_in + fastThreshold;
@@ -3809,5 +3814,8 @@ void  fastOptimized(const uchar * v_in, uchar * v_out)
         return;
     }
 
-    *v_out = 1;
+    // Here we calculate the harris score
+    // calculateHarrisScore(uchar * v_in, int32_t x, uint32_t y, int row_stride)
+    uchar score = calculateHarrisScore(v_in, stride);
+    *v_out = score;
 }

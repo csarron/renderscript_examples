@@ -24,17 +24,30 @@
 
 package net.hydex11.profilerexample;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "RSProfiler";
+
+    // The following bool defines if you need pure profiling mode.
+    // If true:
+    // - Log check interval will be set to a high value (20 seconds)
+    // - Application will automatically end after n cycles (defined below)
+    private static final boolean PURE_PROFILING = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,17 +60,32 @@ public class MainActivity extends AppCompatActivity {
 
     Thread exampleThread;
 
+    // Instantiates our profiler
+    Timings timings;
+
     private void example() {
+        // Prevent window dimming
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
+        timings = new Timings(this);
+        try {
+            timings.enableSaveStats(true);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create temporary CSV file", e);
+        }
 
-        // Create a view to see LogCat log
-        LogView logView = new LogView(this, Timings.TAG);
-        logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        //if (!PURE_PROFILING) {
+            LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
-        logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
+            // Create a view to see LogCat log
+            LogView logView = new LogView(this, Timings.TAG, PURE_PROFILING ? 20 : 5);
+            logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        linearLayout.addView(logView);
+            logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
+
+            // Add our console view to the window
+            linearLayout.addView(logView);
+        //}
 
         // Set the only view button to kill our application
         Button endMe = (Button) findViewById(R.id.button);
@@ -70,6 +98,20 @@ public class MainActivity extends AppCompatActivity {
                     exampleThread.interrupt();
 
                 System.exit(0);
+            }
+        });
+
+        // Button to send current stats CSV file
+        Button sendStatsBtn = (Button) findViewById(R.id.saveStatsBtn);
+        sendStatsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    timings.sendStats();
+                    System.exit(0);
+                } catch (IOException e) {
+                    Log.d(TAG, "CSV file send error");
+                }
             }
         });
 
@@ -89,8 +131,11 @@ public class MainActivity extends AppCompatActivity {
                 Allocation inputAllocation = Allocation.createFromBitmap(mRS, inputBitmap);
                 Allocation outputAllocation = Allocation.createTyped(mRS, inputAllocation.getType());
 
-                // Instantiates our profiler
-                Timings timings = new Timings();
+                // Allocation to store the rgba to gray conversion result
+                Type.Builder tb = new Type.Builder(mRS, Element.U8(mRS));
+                tb.setX(inputBitmap.getWidth());
+                tb.setY(inputBitmap.getHeight());
+                Allocation grayAllocation = Allocation.createTyped(mRS, tb.create());
 
                 // Tells the profiler to call this function before taking each timing. This way
                 // we are listening for previous kernel to really end.
@@ -102,104 +147,193 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 // Averaging will run every 10 cycles
-                timings.setTimingDebugInterval(10);
+                timings.setTimingDebugInterval(50);
 
-                // We create two different scripts, that has same kernels. First one is
+                if (PURE_PROFILING) {
+                    // After n total samples, application will exit and saved CSV data will be sent
+                    timings.setStatsSaveCountLimit(16000);
+                }
+
+                // We create two different scripts, that have same kernels. First one is
                 // standard RenderScript, second one uses FilterScript approach. This way
-                // you can see differences in performance (please use an high end device to
-                // completely notice the difference).
+                // you can see differences in performance.
                 ScriptC_main main = new ScriptC_main(mRS);
                 ScriptC_main_fs main_fs = new ScriptC_main_fs(mRS);
 
                 main.set_inputAllocation(inputAllocation);
+                main.set_grayAllocation(grayAllocation);
+                main.set_outputAllocation(outputAllocation);
                 main_fs.set_inputAllocation(inputAllocation);
+                main_fs.set_outputAllocation(outputAllocation);
 
                 main.set_width(inputBitmap.getWidth());
                 main.set_height(inputBitmap.getHeight());
                 main_fs.set_width(inputBitmap.getWidth());
                 main_fs.set_height(inputBitmap.getHeight());
 
-                // Tells the profiler to output debug data every 100 cycles
-                timings.setTimingDebugInterval(100);
+                int blurRadius3x3 = 1;
+                int blurRadius7x7 = 3;
+                int blurRadius15x15 = 7;
+
+                // Here we set the launch options for the kernels, to prevent the
+                // blur pointers from overflowing
+                Script.LaunchOptions launchOptionsBlur3x3 = new Script.LaunchOptions();
+                launchOptionsBlur3x3.setX(blurRadius3x3, inputBitmap.getWidth() - 1 - blurRadius3x3);
+                launchOptionsBlur3x3.setY(blurRadius3x3, inputBitmap.getHeight() - 1 - blurRadius3x3);
+                Script.LaunchOptions launchOptionsBlur7x7 = new Script.LaunchOptions();
+                launchOptionsBlur7x7.setX(blurRadius7x7, inputBitmap.getWidth() - 1 - blurRadius7x7);
+                launchOptionsBlur7x7.setY(blurRadius7x7, inputBitmap.getHeight() - 1 - blurRadius7x7);
+                Script.LaunchOptions launchOptionsBlur15x15 = new Script.LaunchOptions();
+                launchOptionsBlur15x15.setX(blurRadius15x15, inputBitmap.getWidth() - 1 - blurRadius15x15);
+                launchOptionsBlur15x15.setY(blurRadius15x15, inputBitmap.getHeight() - 1 - blurRadius15x15);
 
                 // My loop
                 while (true) {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
 
-                    // Here we set the launch options for the kernels, to prevent the
-                    // blur pointers from overflowing
-                    Script.LaunchOptions launchOptions = new Script.LaunchOptions();
-
                     // Here we test three different sets of kernels, increasing the blur radius.
-                    // The more it gets high, the more neighbor elements are accessed in the process.
+                    // The more it gets high, the more neighboring elements are accessed in the process.
 
                     // Blur 3x3
-                    int blurRadius = 1;
-                    main.set_blurRadius(blurRadius);
-                    main_fs.set_blurRadius(blurRadius);
-                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
-                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+                    main.set_blurRadius(blurRadius3x3);
+                    main_fs.set_blurRadius(blurRadius3x3);
+
+                    // Reset is called as set_ functions took some time
+                    timings.resetLastTimingsTimestamp();
 
                     // Adds timing for kernel
-                    main.forEach_root(outputAllocation, launchOptions);
-                    timings.addTiming("blur3x3 - RenderScript");
+                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("blur3x3");
 
-                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
-                    timings.addTiming("blur3x3 - RenderScript (pointers)");
+                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("blur3x3 - (pointers)");
 
-                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("blur3x3 - (pointers|rsSet)");
+
+                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("blur3x3 - (pointers|rsGet)");
+
+                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur3x3);
                     timings.addTiming("blur3x3 - FilterScript");
+                    
+                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("setValues3x3");
+
+                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("setValues3x3 - (pointers)");
+
+                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("setValues3x3 - (pointers|rsSet)");
+
+                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur3x3);
+                    timings.addTiming("setValues3x3 - FilterScript");
 
                     // Blur 7x7
-                    blurRadius = 3;
-                    main.set_blurRadius(blurRadius);
-                    main_fs.set_blurRadius(blurRadius);
-                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
-                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+                    main.set_blurRadius(blurRadius7x7);
+                    main_fs.set_blurRadius(blurRadius7x7);
+
+                    // Reset is called as set_ functions took some time
+                    timings.resetLastTimingsTimestamp();
 
                     // Adds timing for kernel
-                    main.forEach_root(outputAllocation, launchOptions);
-                    timings.addTiming("blur7x7 - RenderScript");
+                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("blur7x7");
 
-                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
-                    timings.addTiming("blur7x7 - RenderScript (pointers)");
+                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("blur7x7 - (pointers)");
 
-                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("blur7x7 - (pointers|rsSet)");
+
+                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("blur7x7 - (pointers|rsGet)");
+
+                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur7x7);
                     timings.addTiming("blur7x7 - FilterScript");
 
+                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("setValues7x7");
+
+                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("setValues7x7 - (pointers)");
+
+                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("setValues7x7 - (pointers|rsSet)");
+
+                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur7x7);
+                    timings.addTiming("setValues7x7 - FilterScript");
+
                     // Blur 15x15
-                    blurRadius = 7;
-                    main.set_blurRadius(blurRadius);
-                    main_fs.set_blurRadius(blurRadius);
-                    launchOptions.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
-                    launchOptions.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+                    main.set_blurRadius(blurRadius15x15);
+                    main_fs.set_blurRadius(blurRadius15x15);
+
+                    // Reset is called as set_ functions took some time
+                    timings.resetLastTimingsTimestamp();
 
                     // Adds timing for kernel
-                    main.forEach_root(outputAllocation, launchOptions);
-                    timings.addTiming("blur15x15 - RenderScript");
+                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("blur15x15");
 
-                    main.forEach_pointerKernel(inputAllocation, outputAllocation, launchOptions);
-                    timings.addTiming("blur15x15 - RenderScript (pointers)");
+                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("blur15x15 - (pointers)");
 
-                    main_fs.forEach_root(outputAllocation, launchOptions);
+                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("blur15x15 - (pointers|rsSet)");
+
+                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("blur15x15 - (pointers|rsGet)");
+
+                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur15x15);
                     timings.addTiming("blur15x15 - FilterScript");
 
-                    // Checks if this cycle is the correct one for debugging timings and outputs them
-                    // in case it is.
-                    timings.debugTimings();
+                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("setValues15x15");
 
-                    try {
-                        // Small wait, to not overkill the CPU/GPU
-                        Thread.sleep(10, 0);
-                    } catch (InterruptedException e) {
-                        // Will be caused by clicking on "End" button, as we will be interrupting
-                        // this Thread brutally
+                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("setValues15x15 - (pointers)");
 
-                    }
+                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("setValues15x15 - (pointers|rsSet)");
+
+                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur15x15);
+                    timings.addTiming("setValues15x15 - FilterScript");
+
+                    // RGBA to GRAY conversion
+                    main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
+                    timings.addTiming("RGBAtoGRAY");
+
+                    main.forEach_rgbaToGrayPointerAndSet(inputAllocation);
+                    timings.addTiming("RGBAtoGRAY - (pointers|rsSet)");
+
+                    main.forEach_rgbaToGrayPointerAndGet(grayAllocation);
+                    timings.addTiming("RGBAtoGRAY - (pointers|rsGet)");
+
+                    main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
+                    timings.addTiming("RGBAtoGRAY - (pointers)");
+
+                    main_fs.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
+                    timings.addTiming("RGBAtoGRAY - FilterScript");
+
+                    //if (!PURE_PROFILING) {
+                        // Checks if this cycle is the correct one for debugging timings and outputs them
+                        // in case it is.
+                        timings.debugTimings();
+
+                        try {
+                            // Small wait, to not overkill the CPU/GPU
+                            Thread.sleep(10, 0);
+                        } catch (InterruptedException e) {
+                            // Will be caused by clicking on "End" button, as we will be interrupting
+                            // this Thread brutally
+
+                        }
+                    //}
                 }
             }
         });
         exampleThread.start();
     }
+
 }

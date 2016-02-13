@@ -94,7 +94,7 @@ public class LogView extends ScrollView {
         setPadding(5, 5, 5, 5);
 
         logTextView.setTextColor(Color.GREEN);
-        logTextView.setTextSize(12);
+        logTextView.setTextSize(10);
         logTextView.setTypeface(Typeface.MONOSPACE);
 
         // Fill container (scrolling one)

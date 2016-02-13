@@ -40,31 +40,29 @@ public class MainActivity extends AppCompatActivity {
         example();
     }
 
-    private void example(){
+    private void example() {
 
         // Instantiates the RenderScript context
         RenderScript mRS = RenderScript.create(this);
 
         // Create an input array, containing some numbers
-        int inputArray[] = new int[]{0,1,2,3,4,5,6,7,8,9};
+        int inputArray[] = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
         // Instantiates the input Allocation, that will contain our sample numbers
-        Allocation inputAllocation = Allocation.createSized(mRS,Element.I32(mRS), inputArray.length);
+        Allocation inputAllocation = Allocation.createSized(mRS, Element.I32(mRS), inputArray.length);
 
         // Copies the input array into the input Allocation
         inputAllocation.copyFrom(inputArray);
 
         // Instantiates the output Allocation, that will contain the result of the process
-        Allocation outputAllocation = Allocation.createSized(mRS,Element.I32(mRS), inputArray.length);
+        Allocation outputAllocation = Allocation.createSized(mRS, Element.I32(mRS), inputArray.length);
 
         // Instantiates the sum script
         ScriptC_sum myScript = new ScriptC_sum(mRS);
 
-        // Binds the input allocation into the script
-        myScript.set_inputAllocation(inputAllocation);
-
-        // Run the sum process using outputAllocation as output
-        myScript.forEach_sum2(outputAllocation);
+        // Run the sum process, taking elements that are inside inputAllocation and
+        // placing the process' result inside the outputAllocation
+        myScript.forEach_sum2(inputAllocation, outputAllocation);
 
         // Copies the result of the process from the outputAllocation to
         // a simple int array
@@ -75,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         String debugElements[] = new String[outputArray.length];
 
         String debugString = "Output: ";
-        for(int i = 0; i < outputArray.length; i++)
+        for (int i = 0; i < outputArray.length; i++)
             debugString += String.valueOf(outputArray[i]) + (i < outputArray.length - 1 ? ", " : "");
 
         TextView textView = (TextView) findViewById(R.id.debugTextView);
