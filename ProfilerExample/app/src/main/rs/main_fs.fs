@@ -6,7 +6,7 @@
 
 // Some redit goes to: http://stackoverflow.com/questions/13917106/where-is-the-filterscript-documentation-and-how-can-i-use-it
 
-int blurRadius = 3;
+int blurRadius = 7;
 
 rs_allocation inputAllocation;
 rs_allocation outputAllocation;

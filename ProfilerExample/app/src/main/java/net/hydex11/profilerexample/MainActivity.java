@@ -75,16 +75,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //if (!PURE_PROFILING) {
-            LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
-            // Create a view to see LogCat log
-            LogView logView = new LogView(this, Timings.TAG, PURE_PROFILING ? 20 : 5);
-            logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // Create a view to see LogCat log
+        LogView logView = new LogView(this, Timings.TAG, PURE_PROFILING ? 20 : 5);
+        logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-            logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
+        logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
 
-            // Add our console view to the window
-            linearLayout.addView(logView);
+        // Add our console view to the window
+        linearLayout.addView(logView);
         //}
 
         // Set the only view button to kill our application
@@ -129,10 +129,14 @@ public class MainActivity extends AppCompatActivity {
 
                 // Instantiates the input allocation.
                 Allocation inputAllocation = Allocation.createFromBitmap(mRS, inputBitmap);
-                Allocation outputAllocation = Allocation.createTyped(mRS, inputAllocation.getType());
+
+                Type.Builder tb = new Type.Builder(mRS, Element.U8_4(mRS));
+                tb.setX(inputBitmap.getWidth());
+                tb.setY(inputBitmap.getHeight());
+                Allocation outputAllocation = Allocation.createTyped(mRS, tb.create());
 
                 // Allocation to store the rgba to gray conversion result
-                Type.Builder tb = new Type.Builder(mRS, Element.U8(mRS));
+                tb = new Type.Builder(mRS, Element.U8(mRS));
                 tb.setX(inputBitmap.getWidth());
                 tb.setY(inputBitmap.getHeight());
                 Allocation grayAllocation = Allocation.createTyped(mRS, tb.create());
@@ -171,106 +175,22 @@ public class MainActivity extends AppCompatActivity {
                 main_fs.set_width(inputBitmap.getWidth());
                 main_fs.set_height(inputBitmap.getHeight());
 
-                int blurRadius3x3 = 1;
-                int blurRadius7x7 = 3;
                 int blurRadius15x15 = 7;
 
                 // Here we set the launch options for the kernels, to prevent the
                 // blur pointers from overflowing
-                Script.LaunchOptions launchOptionsBlur3x3 = new Script.LaunchOptions();
-                launchOptionsBlur3x3.setX(blurRadius3x3, inputBitmap.getWidth() - 1 - blurRadius3x3);
-                launchOptionsBlur3x3.setY(blurRadius3x3, inputBitmap.getHeight() - 1 - blurRadius3x3);
-                Script.LaunchOptions launchOptionsBlur7x7 = new Script.LaunchOptions();
-                launchOptionsBlur7x7.setX(blurRadius7x7, inputBitmap.getWidth() - 1 - blurRadius7x7);
-                launchOptionsBlur7x7.setY(blurRadius7x7, inputBitmap.getHeight() - 1 - blurRadius7x7);
                 Script.LaunchOptions launchOptionsBlur15x15 = new Script.LaunchOptions();
                 launchOptionsBlur15x15.setX(blurRadius15x15, inputBitmap.getWidth() - 1 - blurRadius15x15);
                 launchOptionsBlur15x15.setY(blurRadius15x15, inputBitmap.getHeight() - 1 - blurRadius15x15);
+
+                // Blur and set values square 15x15
+                main.set_blurRadius(blurRadius15x15);
+                main_fs.set_blurRadius(blurRadius15x15);
 
                 // My loop
                 while (true) {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
-
-                    // Here we test three different sets of kernels, increasing the blur radius.
-                    // The more it gets high, the more neighboring elements are accessed in the process.
-
-                    // Blur 3x3
-                    main.set_blurRadius(blurRadius3x3);
-                    main_fs.set_blurRadius(blurRadius3x3);
-
-                    // Reset is called as set_ functions took some time
-                    timings.resetLastTimingsTimestamp();
-
-                    // Adds timing for kernel
-                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("blur3x3");
-
-                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("blur3x3 - (pointers)");
-
-                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("blur3x3 - (pointers|rsSet)");
-
-                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("blur3x3 - (pointers|rsGet)");
-
-                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("blur3x3 - FilterScript");
-                    
-                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("setValues3x3");
-
-                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("setValues3x3 - (pointers)");
-
-                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("setValues3x3 - (pointers|rsSet)");
-
-                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur3x3);
-                    timings.addTiming("setValues3x3 - FilterScript");
-
-                    // Blur 7x7
-                    main.set_blurRadius(blurRadius7x7);
-                    main_fs.set_blurRadius(blurRadius7x7);
-
-                    // Reset is called as set_ functions took some time
-                    timings.resetLastTimingsTimestamp();
-
-                    // Adds timing for kernel
-                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("blur7x7");
-
-                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("blur7x7 - (pointers)");
-
-                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("blur7x7 - (pointers|rsSet)");
-
-                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("blur7x7 - (pointers|rsGet)");
-
-                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("blur7x7 - FilterScript");
-
-                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("setValues7x7");
-
-                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("setValues7x7 - (pointers)");
-
-                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("setValues7x7 - (pointers|rsSet)");
-
-                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur7x7);
-                    timings.addTiming("setValues7x7 - FilterScript");
-
-                    // Blur 15x15
-                    main.set_blurRadius(blurRadius15x15);
-                    main_fs.set_blurRadius(blurRadius15x15);
-
-                    // Reset is called as set_ functions took some time
-                    timings.resetLastTimingsTimestamp();
 
                     // Adds timing for kernel
                     main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur15x15);
@@ -316,20 +236,19 @@ public class MainActivity extends AppCompatActivity {
                     main_fs.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
                     timings.addTiming("RGBAtoGRAY - FilterScript");
 
-                    //if (!PURE_PROFILING) {
-                        // Checks if this cycle is the correct one for debugging timings and outputs them
-                        // in case it is.
-                        timings.debugTimings();
+                    // Checks if this cycle is the correct one for debugging timings and outputs them
+                    // in case it is.
+                    timings.debugTimings();
 
-                        try {
-                            // Small wait, to not overkill the CPU/GPU
-                            Thread.sleep(10, 0);
-                        } catch (InterruptedException e) {
-                            // Will be caused by clicking on "End" button, as we will be interrupting
-                            // this Thread brutally
+                    try {
+                        // Small wait, to not overkill the CPU/GPU
+                        Thread.sleep(10, 0);
+                    } catch (InterruptedException e) {
+                        // Will be caused by clicking on "End" button, as we will be interrupting
+                        // this Thread brutally
 
-                        }
-                    //}
+                    }
+
                 }
             }
         });
