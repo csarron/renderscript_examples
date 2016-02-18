@@ -29,7 +29,7 @@ android {
         debugg {
             keyAlias 'debugg'
             keyPassword 'debugg'
-            storeFile file('D:/dev/rsbookexamples/ProfilerExample/debugKeyStore.jks')
+            storeFile file("$projectDir/debugKeyStore.jks")
             storePassword 'debugg'
         }
     }
@@ -49,6 +49,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debugg
+        }
+        debug {
+            renderscriptDebuggable false
+            renderscriptOptimLevel 3
         }
     }
 }

@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 // Instantiate our RS context
-                final RenderScript mRS = RenderScript.create(MainActivity.this);
+                final RenderScript mRS = RenderScript.create(MainActivity.this); //,BuildConfig.DEBUG ? RenderScript.ContextType.DEBUG : RenderScript.ContextType.NORMAL);
 
                 // Load input image
                 Bitmap inputBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.houseimage);
@@ -175,17 +175,25 @@ public class MainActivity extends AppCompatActivity {
                 main_fs.set_width(inputBitmap.getWidth());
                 main_fs.set_height(inputBitmap.getHeight());
 
-                int blurRadius15x15 = 7;
+                Log.d(TAG, String.format("Loaded bitmap with size %d x %d", inputBitmap.getWidth(), inputBitmap.getHeight()));
+
+                int blurRadius = 3;
 
                 // Here we set the launch options for the kernels, to prevent the
                 // blur pointers from overflowing
-                Script.LaunchOptions launchOptionsBlur15x15 = new Script.LaunchOptions();
-                launchOptionsBlur15x15.setX(blurRadius15x15, inputBitmap.getWidth() - 1 - blurRadius15x15);
-                launchOptionsBlur15x15.setY(blurRadius15x15, inputBitmap.getHeight() - 1 - blurRadius15x15);
+                Script.LaunchOptions launchOptionsBlur = new Script.LaunchOptions();
+                launchOptionsBlur.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
+                launchOptionsBlur.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
 
-                // Blur and set values square 15x15
-                main.set_blurRadius(blurRadius15x15);
-                main_fs.set_blurRadius(blurRadius15x15);
+                // Blur and set values square 
+                main.set_blurRadius(blurRadius);
+                main_fs.set_blurRadius(blurRadius);
+
+                // Set in-script variable
+                main.forEach_fillPngData(inputAllocation);
+                main_fs.forEach_fillPngData(inputAllocation);
+                mRS.finish();
+                Log.d(TAG, "Pre filled png data");
 
                 // My loop
                 while (true) {
@@ -193,32 +201,41 @@ public class MainActivity extends AppCompatActivity {
                     timings.initTimings();
 
                     // Adds timing for kernel
-                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("blur15x15");
+                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur");
 
-                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("blur15x15 - (pointers)");
+                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - (pointers)");
 
-                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("blur15x15 - (pointers|rsSet)");
+                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - (pointers|rsSet)");
 
-                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("blur15x15 - (pointers|rsGet)");
+                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - (pointers|rsGet)");
 
-                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("blur15x15 - FilterScript");
+                    main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - (pointers|rsGet|ScriptVar)");
 
-                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("setValues15x15");
+                    main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - (pointers|rsGet|ScriptVarPointer)");
 
-                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("setValues15x15 - (pointers)");
+                    main_fs.forEach_blurSimpleKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - FS (pointers|rsGet|ScriptVar)");
 
-                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("setValues15x15 - (pointers|rsSet)");
+                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - FilterScript");
 
-                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur15x15);
-                    timings.addTiming("setValues15x15 - FilterScript");
+                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur);
+                    timings.addTiming("setValues");
+
+                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
+                    timings.addTiming("setValues - (pointers)");
+
+                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur);
+                    timings.addTiming("setValues - (pointers|rsSet)");
+
+                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("setValues - FilterScript");
 
                     // RGBA to GRAY conversion
                     main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
