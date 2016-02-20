@@ -7,7 +7,7 @@
 
 // Some credit goes to: http://stackoverflow.com/questions/13917106/where-is-the-filterscript-documentation-and-how-can-i-use-it
 
-int blurRadius = 3;
+int blurRadius;
 
 rs_allocation inputAllocation;
 rs_allocation outputAllocation;
@@ -168,24 +168,18 @@ const static float3 grayMultipliers = {0.299f, 0.587f, 0.114f};
 // operations on Allocation having different Types.
 uchar __attribute__((kernel)) rgbaToGrayNoPointer(uchar4 in, uint32_t x, uint32_t y) {
 
-    uchar out;
-
-    out = (uchar) ((float)in.r*grayMultipliers.r) +
-            ((float)in.g*grayMultipliers.g) +
-          ((float)in.b*grayMultipliers.b);
-
-   return out;
+    return (uchar) ((float)in.r*grayMultipliers.r +
+            (float)in.g*grayMultipliers.g +
+          (float)in.b*grayMultipliers.b);
 }
 
 // Input: pointer
 // Output: rsSetElementAt
 void rgbaToGrayPointerAndSet(const uchar4 * v_in, uint32_t x, uint32_t y)
 {
-    uchar out;
-
-    out = (uchar) ((float)v_in->r*grayMultipliers.r) +
-            ((float)v_in->g*grayMultipliers.g) +
-          ((float)v_in->b*grayMultipliers.b);
+    uchar out = (uchar) ((float)v_in->r*grayMultipliers.r +
+            (float)v_in->g*grayMultipliers.g +
+          (float)v_in->b*grayMultipliers.b);
 
    rsSetElementAt_uchar(grayAllocation,out,x,y);
 }
@@ -194,27 +188,19 @@ void rgbaToGrayPointerAndSet(const uchar4 * v_in, uint32_t x, uint32_t y)
 // Output: pointer
 void rgbaToGrayPointerAndGet(uchar * v_out, uint32_t x, uint32_t y)
 {
-    uchar out;
-
     uchar4 in = rsGetElementAt_uchar4(inputAllocation, x, y);
 
-    out = (uchar) ((float)in.r*grayMultipliers.r) +
-            ((float)in.g*grayMultipliers.g) +
-          ((float)in.b*grayMultipliers.b);
-
-   *v_out = out;
+   *v_out = (uchar) ((float)in.r*grayMultipliers.r +
+                        (float)in.g*grayMultipliers.g +
+                      (float)in.b*grayMultipliers.b);
 }
 
 // Input: pointer
 // Output: pointer
 void rgbaToGrayPointerAndOut(const uchar4 * v_in, uchar * v_out, uint32_t x, uint32_t y)
 {
-    uchar out;
-
-    out = (uchar) ((float)v_in->r*grayMultipliers.r) +
-            ((float)v_in->g*grayMultipliers.g) +
-          ((float)v_in->b*grayMultipliers.b);
-
-   *v_out = out;
+   *v_out = (uchar) ((float)v_in->r*grayMultipliers.r +
+                        (float)v_in->g*grayMultipliers.g +
+                      (float)v_in->b*grayMultipliers.b);
 }
 

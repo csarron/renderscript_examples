@@ -6,7 +6,7 @@
 
 // Some redit goes to: http://stackoverflow.com/questions/13917106/where-is-the-filterscript-documentation-and-how-can-i-use-it
 
-int blurRadius = 3;
+int blurRadius;
 
 rs_allocation inputAllocation;
 rs_allocation outputAllocation;
@@ -14,7 +14,7 @@ rs_allocation outputAllocation;
 uint32_t width;
 uint32_t height;
 
-uchar4 __attribute__((kernel)) blurSimpleKernel(uint32_t x, uint32_t y) {
+uchar4 __attribute__((kernel)) blurSimpleKernelFS(uint32_t x, uint32_t y) {
     uint4 sum = 0;
     uint count = 0;
     for (int yi = -blurRadius; yi <= blurRadius; ++yi) {
@@ -35,7 +35,7 @@ void __attribute__((kernel)) fillPngData(uchar4 in, uint32_t x, uint32_t y){
     pngData[x + y * pngWidth] = in;
 }
 
-uchar4 __attribute__((kernel)) blurSimpleKernelGetFromScriptVariable(uint32_t x, uint32_t y) {
+uchar4 __attribute__((kernel)) blurSimpleKernelFSGetFromScriptVariable(uint32_t x, uint32_t y) {
     uint4 sum = 0;
     uint count = 0;
 
@@ -54,7 +54,7 @@ uchar4 __attribute__((kernel)) blurSimpleKernelGetFromScriptVariable(uint32_t x,
 }
 
 // Set tons of values, using radius blur
-void __attribute__((kernel)) setValuesSimpleKernel(uchar4 in, int x, int y){
+void __attribute__((kernel)) setValuesSimpleKernelFS(uchar4 in, int x, int y){
     for(int yi = -blurRadius; yi <= blurRadius; ++yi)
         {
             for (int xi = -blurRadius; xi <= blurRadius; ++xi) {
@@ -67,13 +67,9 @@ const static float3 grayMultipliers = {0.299f, 0.587f, 0.114f};
 
 // The following function presents a standard way to peroform in/out
 // operations on Allocation having different Types.
-uchar __attribute__((kernel)) rgbaToGrayNoPointer(uchar4 in, uint32_t x, uint32_t y) {
+uchar __attribute__((kernel)) rgbaToGraySimpleKernelFS(uchar4 in, uint32_t x, uint32_t y) {
 
-    uchar out;
-
-    out = (uchar) ((float)in.r*grayMultipliers.r) +
-            ((float)in.g*grayMultipliers.g) +
-          ((float)in.b*grayMultipliers.b);
-
-   return out;
+    return (uchar) ((float)in.r*grayMultipliers.r +
+                      (float)in.g*grayMultipliers.g +
+                    (float)in.b*grayMultipliers.b);
 }

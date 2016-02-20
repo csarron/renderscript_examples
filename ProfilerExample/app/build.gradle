@@ -38,6 +38,8 @@ android {
     defaultConfig {
         applicationId "net.hydex11.profilerexample"
         minSdkVersion 18
+        // Fast hack, NOT production ready, to write files on API 23 devices without asking for
+        // permissions.
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"

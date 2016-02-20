@@ -216,15 +216,15 @@ public class MainActivity extends AppCompatActivity {
                     timings.addTiming("blur - (pointers|rsGet)");
 
                     main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|rsGet|ScriptVar)");
+                    timings.addTiming("blur - (pointers|ScriptVar)");
 
                     main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|rsGet|ScriptVarPointer)");
+                    timings.addTiming("blur - (pointers|ScriptVarPointer)");
 
-                    main_fs.forEach_blurSimpleKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - FS (pointers|rsGet|ScriptVar)");
+                    main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur);
+                    timings.addTiming("blur - FS (pointers|ScriptVar)");
 
-                    main_fs.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
+                    main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur);
                     timings.addTiming("blur - FilterScript");
 
                     main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur);
@@ -236,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
                     main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur);
                     timings.addTiming("setValues - (pointers|rsSet)");
 
-                    main_fs.forEach_setValuesSimpleKernel(outputAllocation, launchOptionsBlur);
+                    main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur);
                     timings.addTiming("setValues - FilterScript");
 
                     // RGBA to GRAY conversion
@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
                     main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
                     timings.addTiming("RGBAtoGRAY - (pointers)");
 
-                    main_fs.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
+                    main_fs.forEach_rgbaToGraySimpleKernelFS(inputAllocation, grayAllocation);
                     timings.addTiming("RGBAtoGRAY - FilterScript");
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
