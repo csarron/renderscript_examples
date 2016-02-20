@@ -18,32 +18,34 @@ static const float HARRIS_SCORE_DIV = 13.1607628254f;
 static const int BLOCK_SIZE = 7;
 static const float HARRIS_K = 0.04f;
 
-static uchar calculateHarrisScore(uchar * v_in, int row_stride) {
+static uchar calculateHarrisScore(int x, int y)
+{
 
     int a = 0, b = 0, c = 0;
-
-    uchar * currentPoint;
 
     int e0,e1,e2,e3,e4,e5,e6,e7,e8;
 
     int Ix;
     int Iy;
 
+    int startX, startY;
+
     // For each analyzed block we calculate the gradients
     for (int row = -3; row < 4; row++) {
         for (int col = -3; col < 4; col++) {
 
-            currentPoint = v_in + col + row_stride * row;
+            startX = x + col;
+            startY = y + row;
 
-            e0 = (int) currentPoint[-1 + row_stride * -1];
-            e1 = (int) currentPoint[0 + row_stride * -1];
-            e2 = (int) currentPoint[1 + row_stride * -1];
-            e3 = (int) currentPoint[-1];
+            e0 = (int) rsGetElementAt_uchar(grayAllocation, startX-1 , startY-1);
+            e1 = (int) rsGetElementAt_uchar(grayAllocation, startX , startY-1);
+            e2 = (int) rsGetElementAt_uchar(grayAllocation, startX+1 , startY-1);
+            e3 = (int) rsGetElementAt_uchar(grayAllocation, startX-1 , startY);
             //e4 = (int) currentPoint[0]; // Not used
-            e5 = (int) currentPoint[1];
-            e6 = (int) currentPoint[-1 + row_stride * 1];
-            e7 = (int) currentPoint[0 + row_stride * 1];
-            e8 = (int) currentPoint[1 + row_stride * 1];
+            e5 = (int) rsGetElementAt_uchar(grayAllocation, startX+1 , startY);
+            e6 = (int) rsGetElementAt_uchar(grayAllocation, startX-1 , startY+1);
+            e7 = (int) rsGetElementAt_uchar(grayAllocation, startX , startY+1);
+            e8 = (int) rsGetElementAt_uchar(grayAllocation, startX+1 , startY+1);
 
             Ix = (e5 - e3) * 2 + (e2 - e0) + (e8 - e6);
             Iy = (e7 - e1) * 2 + (e6 - e0) + (e8 - e2);
@@ -61,9 +63,7 @@ static uchar calculateHarrisScore(uchar * v_in, int row_stride) {
     // If lower than our wanted score, this point is not a valid corner.
     if(ret < MIN_HARRIS_SCORE) {
         ret = 0;
-    }
-    else
-    {
+    } else {
         // If score is higher than the maximum we can tolerate, we just adjust it.
         if(ret > MAX_HARRIS_SCORE)
             ret = MAX_HARRIS_SCORE;

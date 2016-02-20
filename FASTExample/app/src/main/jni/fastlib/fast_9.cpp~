@@ -32,8 +32,8 @@ xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num
     make_offsets(pixel, stride);
 
 #pragma omp parallel for
-    for (y = 4; y < ysize - 5; y++)
-        for (x = 4; x < xsize - 5; x++) {
+    for (y = 3; y < ysize - 4; y++)
+        for (x = 3; x < xsize - 4; x++) {
             byte *p = im + x + y * stride;
 
             int cb = *p + b;

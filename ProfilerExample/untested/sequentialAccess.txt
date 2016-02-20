@@ -1,0 +1,82 @@
+---- RS
+
+// Sequential access test
+// Following test is made on a plain array, where elements are accessed by a major index and used
+rs_allocation sequentialAccessAllocationWithSingleElements;
+
+void prefillSequentialAccessSingleElements(int * v_out){
+    *v_out = rsRand(0,1000000);
+}
+void prefillSequentialAccessPackedElements(int4 * v_out){
+    v_out->x = rsRand(0,1000000);
+    v_out->y = rsRand(0,1000000);
+    v_out->z = rsRand(0,1000000);
+    v_out->w = rsRand(0,1000000);
+}
+
+void sequentialAccessMultipleAccesses(int * v_out, uint x){
+
+    // Multiply by 4
+    int newX = x << 2;
+
+    int element1 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX);
+    int element2 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+1);
+    int element3 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+2);
+    int element4 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+3);
+
+    int hash = element1 ^ element2 ^ element3 ^ element4;
+
+    *v_out = hash;
+}
+
+rs_allocation sequentialAccessAllocationWithPackedElements;
+void sequentialAccessSingleAccess(int * v_out, uint x){
+
+    // Fake calculation, to match the computational cost of the two kernel functions
+    //int fakeX = x << 2;
+
+    int4 elementPack = rsGetElementAt_int4(sequentialAccessAllocationWithPackedElements,x);
+
+    int hash = elementPack.x ^ elementPack.y ^ elementPack.z ^ elementPack.w;
+
+    *v_out = hash;
+}
+
+-- Java
+
+
+                // Sequential access test allocations
+                int sequentialAccessPackedElementsCount = 1024 * 1024;
+                Allocation sequentialAccessAllocationWithSingleElements = Allocation.createSized(mRS, Element.I32(mRS), sequentialAccessPackedElementsCount * 4);
+                Allocation sequentialAccessAllocationWithPackedElements = Allocation.createSized(mRS, Element.I32_4(mRS), sequentialAccessPackedElementsCount);
+
+//
+
+                // Used to trigger, for this example, the same number of initial spawn kernel functions
+                Script.LaunchOptions sequentialAccessLaunchOptions = new Script.LaunchOptions();
+                sequentialAccessLaunchOptions.setX(0, sequentialAccessPackedElementsCount - 1);
+
+                main.set_sequentialAccessAllocationWithSingleElements(sequentialAccessAllocationWithSingleElements);
+                main.set_sequentialAccessAllocationWithPackedElements(sequentialAccessAllocationWithPackedElements);
+
+                // Pre fill sequential access allocations
+                main.forEach_prefillSequentialAccessSingleElements(sequentialAccessAllocationWithSingleElements);
+                main.forEach_prefillSequentialAccessPackedElements(sequentialAccessAllocationWithPackedElements);
+
+--
+
+                    main.forEach_sequentialAccessMultipleAccesses(sequentialAccessAllocationWithSingleElements, sequentialAccessLaunchOptions);
+                    timings.addTiming("sequentialAccessMultipleAccesses");
+
+                    main.forEach_sequentialAccessSingleAccess(sequentialAccessAllocationWithSingleElements, sequentialAccessLaunchOptions);
+                    timings.addTiming("sequentialAccessSingleAccess");
+
+--- Doc
+
+* **Sequential access**, where it is evaluated the difference between accessing elements in an exploded or packed way (ex. access 4 times a `int`, or access 1 time a `int4`). 
+
+
+
+For the **Sequential access** task, two tests were performed. Input allocations contain the same kind and count of elements (`int`), the first allocation having them in a plain `int` array and the second allocation having them packed in `int4` groups. 
+
+* 

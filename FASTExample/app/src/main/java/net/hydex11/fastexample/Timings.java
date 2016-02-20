@@ -24,8 +24,18 @@
 
 package net.hydex11.fastexample;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -35,17 +45,19 @@ import java.util.HashMap;
 public class Timings {
     public static final String TAG = "Timings";
 
+    private Context context;
+
     // Timestamp got on last addTiming call
-    private long lastTimingsTimestamp = 0;
+    private double lastTimingsTimestamp = 0;
 
     // Counter to count timings cycles. When this counter reaches timingDebugInterval,
     // profiler will output its code to LogCat
     private int timingDebugCounter = 0;
-    private int timingDebugInterval = 10;
+    private int timingDebugInterval = 50;
 
     // Profilings are stores as HashMap and their calculation is based on average time
     private ArrayList<String> timingKeys = new ArrayList<>();
-    private HashMap<String, ArrayList<Long>> timings = new HashMap<>();
+    private HashMap<String, ArrayList<Double>> timings = new HashMap<>();
 
     // Callback function (sync) to be used before taking the current time. Useful to test single
     // RenderScript kernels, as we can this way call mRS.finish() before each of them
@@ -60,13 +72,67 @@ public class Timings {
         this.timingCallback = timingCallback;
     }
 
+    // Enables stats to be saved to disk
+    private boolean saveStatsToDisk = false;
+    private BufferedWriter statsFileWriter;
+    private Uri statsFileUri;
+    public void enableSaveStats(boolean enable) throws IOException {
+        // If save is enabled, stats are stored in memory, and saved
+        // to disk on request. Then, the CSV file gets sent to an
+        // intent.
+        saveStatsToDisk = enable;
+
+        if(saveStatsToDisk && statsFileWriter == null)
+        {
+            // Creates a custom folder inside the external dir
+            File rsProfilerDir = new File(Environment.getExternalStorageDirectory() + File.separator + "RSProfiler");
+            rsProfilerDir.mkdirs();
+            File csvFile = new File(rsProfilerDir, "RSProfilerData" + Build.MODEL.replace("\\s", "") + ".csv");
+            statsFileUri = Uri.fromFile(csvFile);
+            // Instantiates a new buffered writer
+            statsFileWriter = new BufferedWriter(new FileWriter(csvFile));
+
+            // Writes header
+            statsFileWriter.write("Tag,Timing\n");
+        }
+        else
+        {
+            if (statsFileWriter != null)
+            {
+                statsFileWriter.close();
+                statsFileWriter = null;
+            }
+        }
+    }
+
+    // The following limit is used when wanting to limit the maximum executions of code.
+    // When the limit is reached, sendStats function gets called and application exits.
+    private int statSaveCountLimit = 0;
+    public void setStatsSaveCountLimit(int limit){
+        statSaveCountLimit = limit;
+    }
+
+    // Function that gets called when there is the need to send the CSV file to
+    // an intent
+    public void sendStats() throws IOException {
+        if (saveStatsToDisk && statsFileWriter!=null){
+            statsFileWriter.close();
+            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "RenderScript Profiler data");
+            sendIntent.putExtra(Intent.EXTRA_STREAM, statsFileUri);
+            sendIntent.setType("text/html");
+            context.startActivity(sendIntent);
+        }
+    }
+
     // Interface for function to be called before each timing cycle
     public interface TimingCallback {
         void run();
     }
 
     // Constructor
-    public Timings(){
+    public Timings(Context context){
+        this.context = context;
         clearTimings();
     }
 
@@ -80,55 +146,79 @@ public class Timings {
 
     // Function to be called at the beginning of every calculation loop cycle
     public void initTimings() {
-        lastTimingsTimestamp = System.currentTimeMillis();
+        lastTimingsTimestamp = java.lang.System.nanoTime();
     }
 
     // Logs a new timing
+    private long totalSamples = 0;
     public void addTiming(String tag) {
-        if (!timings.containsKey(tag)) {
-            // New timing
-            timingKeys.add(tag);
-            timings.put(tag, new ArrayList<Long>());
-        }
 
         // If callback function exists, call it and waits for its completion
         if (timingCallback != null) {
             timingCallback.run();
         }
 
-        long now =  System.currentTimeMillis();
+        double now = java.lang.System.nanoTime();
+        double elapsed = (now - lastTimingsTimestamp)/1000000; // Nanoseconds to milliseconds
 
-        timings.get(tag).add(now - lastTimingsTimestamp);
+        if(saveStatsToDisk && statsFileWriter != null)
+            try {
+                // If write to file is enabled, replaces commas in the tag with underscores
+                // and writes timing to CSV file
+                statsFileWriter.write(tag.replaceAll(",", "_") + "," + elapsed + "\n");
+            } catch (IOException e) {
+                Log.e(TAG, "Stats file writer exception", e);
+            }
 
-        lastTimingsTimestamp = now;
+        if (!timings.containsKey(tag)) {
+            // New timing
+            timingKeys.add(tag);
+            timings.put(tag, new ArrayList<Double>());
+        }
+        timings.get(tag).add(elapsed);
+        totalSamples++;
 
+        if(statSaveCountLimit > 0 && totalSamples>= statSaveCountLimit)
+        {
+            try {
+                sendStats();
+                System.exit(0);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not send saved data", e);
+            }
+        }
+
+        resetLastTimingsTimestamp();
+    }
+    public void resetLastTimingsTimestamp(){
+        lastTimingsTimestamp = java.lang.System.nanoTime();
     }
 
     // Function to be called on every loop cycle, that checks if current profiling cycle has to end.
     // If it has to end, prints debug data to LogCat.
     public void debugTimings() {
-        if (BuildConfig.DEBUG) {
-            timingDebugCounter++;
+        timingDebugCounter++;
 
-            if (timingDebugCounter % timingDebugInterval == 0) {
+        if (timingDebugCounter % timingDebugInterval == 0) {
 
-                for (String tag : timingKeys) {
-                    double count = timings.get(tag).size();
-                    double timeSum = 0;
+            for (String tag : timingKeys) {
+                double count = timings.get(tag).size();
+                double timeSum = 0;
 
-                    // Calculate avg for timing
-                    for (int i = 0; i < count; i++) {
-                        timeSum += timings.get(tag).get(i);
-                    }
-
-                    double avg = timeSum / count;
-
-                    Log.d("Timings", tag + ": " + avg + "ms");
+                // Calculate avg for timing
+                for (int i = 0; i < count; i++) {
+                    timeSum += timings.get(tag).get(i);
                 }
 
-                clearTimings();
+                double avg = timeSum / count;
+
+                Log.i(TAG, tag + ": " + String.format("%.3f", avg) + "ms");
             }
 
+            Log.i(TAG, "Total samples: " + totalSamples);
+
+            clearTimings();
         }
+
     }
 }

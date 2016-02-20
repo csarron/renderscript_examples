@@ -63,10 +63,11 @@ JNIEXPORT void JNICALL Java_net_hydex11_fastexample_MainActivity_setImageSize(JN
         exit(1); // An error has occurred!
 }
 
-JNIEXPORT int JNICALL Java_net_hydex11_fastexample_MainActivity_yuvToGray(JNIEnv* env,
+JNIEXPORT int JNICALL Java_net_hydex11_fastexample_MainActivity_fastLibExtraction(JNIEnv* env,
     jobject,
     jbyteArray yuvDataArray)
 {
+
     // False because we do not want to copy the input data, just refer to it.
     jboolean isCopy = false;
     byte* yuvDataPointer = (byte*)env->GetByteArrayElements(yuvDataArray, &isCopy);
@@ -74,19 +75,15 @@ JNIEXPORT int JNICALL Java_net_hydex11_fastexample_MainActivity_yuvToGray(JNIEnv
     // Receives a YUV image as input. Must be converted to a grayscale one.
     yuvToGray(yuvDataPointer, grayImagePointer);
 
-    // Release env
-    env->ReleaseByteArrayElements(yuvDataArray, (jbyte*)yuvDataPointer, JNI_ABORT);
-}
-
-JNIEXPORT int JNICALL Java_net_hydex11_fastexample_MainActivity_fastLibExtraction(JNIEnv* env,
-    jobject)
-{
     // Perform extraction
     // xy* fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners);
     // Implementation of optimized FAST lib extractor.
     // Reference: http://www.edwardrosten.com/work/fast.html
     int cornersCount = 0;
     fast9_detect(grayImagePointer, imageWidth, imageHeight, imageWidth, 20, &cornersCount);
+
+    // Release env
+    env->ReleaseByteArrayElements(yuvDataArray, (jbyte*)yuvDataPointer, JNI_ABORT);
 
     return cornersCount;
 }
