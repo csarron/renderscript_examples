@@ -217,3 +217,32 @@ void rgbaToGrayPointerAndOut(const uchar4 * v_in, uchar * v_out, uint32_t x, uin
 
    *v_out = out;
 }
+
+// Sequential access test
+// Following test is made on a plain array, where elements are accessed by a major index and used
+rs_allocation sequentialAccessAllocationWithSingleElements;
+void sequentialAccessMultipleAccesses(int * v_out, uint x){
+
+    int newX = x * 4;
+
+    int element1 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX);
+    int element2 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+1);
+    int element3 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+2);
+    int element4 = rsGetElementAt_int(sequentialAccessAllocationWithSingleElements,newX+3);
+
+    int hash = element1 ^ element2 ^ element3 ^ element4;
+
+    *v_out = hash;
+}
+
+rs_allocation sequentialAccessAllocationWithPackedElements;
+void sequentialAccessSingleAccess(int * v_out, uint x){
+
+    int fakeX = x * 4;
+
+    int4 elementPack = rsGetElementAt_int4(sequentialAccessAllocationWithPackedElements,x);
+
+    int hash = elementPack.x ^ elementPack.y ^ elementPack.z ^ elementPack.w;
+
+    *v_out = hash;
+}

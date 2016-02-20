@@ -122,7 +122,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 // Instantiate our RS context
-                final RenderScript mRS = RenderScript.create(MainActivity.this); //,BuildConfig.DEBUG ? RenderScript.ContextType.DEBUG : RenderScript.ContextType.NORMAL);
+                boolean debug = false; // BuildConfig.DEBUG;
+                final RenderScript mRS = RenderScript.create(MainActivity.this, debug ? RenderScript.ContextType.DEBUG : RenderScript.ContextType.NORMAL);
 
                 // Load input image
                 Bitmap inputBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.houseimage);
@@ -140,6 +141,20 @@ public class MainActivity extends AppCompatActivity {
                 tb.setX(inputBitmap.getWidth());
                 tb.setY(inputBitmap.getHeight());
                 Allocation grayAllocation = Allocation.createTyped(mRS, tb.create());
+
+                // Sequential access test allocations
+                int sequentialAccessPackedElementsCount = 1024 * 128;
+                Allocation sequentialAccessAllocationWithSingleElements = Allocation.createSized(mRS, Element.I32(mRS), sequentialAccessPackedElementsCount * 4);
+                Allocation sequentialAccessAllocationWithPackedElements = Allocation.createSized(mRS, Element.I32_4(mRS), sequentialAccessPackedElementsCount);
+
+                int randomData[] = new int[sequentialAccessPackedElementsCount * 4];
+                for (int i = 0; i < sequentialAccessPackedElementsCount * 4; i++) {
+                    randomData[i] = (int) (Math.random() * 100000);
+                }
+
+                sequentialAccessAllocationWithSingleElements.copyFrom(randomData);
+                sequentialAccessAllocationWithPackedElements.copyFrom(randomData);
+                Log.d(TAG, "Loaded random data");
 
                 // Tells the profiler to call this function before taking each timing. This way
                 // we are listening for previous kernel to really end.
@@ -167,6 +182,8 @@ public class MainActivity extends AppCompatActivity {
                 main.set_inputAllocation(inputAllocation);
                 main.set_grayAllocation(grayAllocation);
                 main.set_outputAllocation(outputAllocation);
+                main.set_sequentialAccessAllocationWithSingleElements(sequentialAccessAllocationWithSingleElements);
+                main.set_sequentialAccessAllocationWithPackedElements(sequentialAccessAllocationWithPackedElements);
                 main_fs.set_inputAllocation(inputAllocation);
                 main_fs.set_outputAllocation(outputAllocation);
 
@@ -184,6 +201,10 @@ public class MainActivity extends AppCompatActivity {
                 Script.LaunchOptions launchOptionsBlur = new Script.LaunchOptions();
                 launchOptionsBlur.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
                 launchOptionsBlur.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+
+                // Used to trigger, for this example, the same number of initial spawn kernel functions
+                Script.LaunchOptions sequentialAccessLaunchOptions = new Script.LaunchOptions();
+                sequentialAccessLaunchOptions.setX(0, sequentialAccessPackedElementsCount - 1);
 
                 // Blur and set values square 
                 main.set_blurRadius(blurRadius);
@@ -252,6 +273,12 @@ public class MainActivity extends AppCompatActivity {
 
                     main_fs.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
                     timings.addTiming("RGBAtoGRAY - FilterScript");
+
+                    main.forEach_sequentialAccessMultipleAccesses(sequentialAccessAllocationWithSingleElements, sequentialAccessLaunchOptions);
+                    timings.addTiming("sequentialAccessMultipleAccesses");
+
+                    main.forEach_sequentialAccessSingleAccess(sequentialAccessAllocationWithSingleElements, sequentialAccessLaunchOptions);
+                    timings.addTiming("sequentialAccessSingleAccess");
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
                     // in case it is.
