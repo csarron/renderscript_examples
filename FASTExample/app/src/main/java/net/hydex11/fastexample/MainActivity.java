@@ -225,8 +225,8 @@ public class MainActivity extends AppCompatActivity {
         // a border of 3 pixels to operate and harris score requires 4 of them, so
         // the maximum is chosen.
         fastLaunchOptions = new Script.LaunchOptions();
-        fastLaunchOptions.setX(4, inputImageSize.width - 5);
-        fastLaunchOptions.setY(4, inputImageSize.height - 5);
+        fastLaunchOptions.setX(4, inputImageSize.width - 4);
+        fastLaunchOptions.setY(4, inputImageSize.height - 4);
 
         // Settings this to true tells the camera preview callback that the RS code
         // can be executed

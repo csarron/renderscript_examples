@@ -6,13 +6,13 @@
 
 // Some redit goes to: http://stackoverflow.com/questions/13917106/where-is-the-filterscript-documentation-and-how-can-i-use-it
 
-int blurRadius;
+int blurRadius = 3;
 
 rs_allocation inputAllocation;
 rs_allocation outputAllocation;
 
-uint32_t width;
-uint32_t height;
+uint32_t width = 0;
+uint32_t height = 0;
 
 uchar4 __attribute__((kernel)) blurSimpleKernelFS(uint32_t x, uint32_t y) {
     uint4 sum = 0;
@@ -31,6 +31,7 @@ const int pngWidth = 500;
 const int pngHeight = 286;
 uchar4 pngData[pngWidth * pngHeight];
 
+// Kernel function used to load image data
 void __attribute__((kernel)) fillPngData(uchar4 in, uint32_t x, uint32_t y){
     pngData[x + y * pngWidth] = in;
 }

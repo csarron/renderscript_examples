@@ -74,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException("Could not create temporary CSV file", e);
         }
 
-        //if (!PURE_PROFILING) {
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
         // Create a view to see LogCat log
@@ -85,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Add our console view to the window
         linearLayout.addView(logView);
-        //}
 
         // Set the only view button to kill our application
         Button endMe = (Button) findViewById(R.id.button);
@@ -183,8 +181,8 @@ public class MainActivity extends AppCompatActivity {
                 // Here we set the launch options for the kernels, to prevent the
                 // blur pointers from overflowing
                 Script.LaunchOptions launchOptionsBlur = new Script.LaunchOptions();
-                launchOptionsBlur.setX(blurRadius, inputBitmap.getWidth() - 1 - blurRadius);
-                launchOptionsBlur.setY(blurRadius, inputBitmap.getHeight() - 1 - blurRadius);
+                launchOptionsBlur.setX(blurRadius, inputBitmap.getWidth() - blurRadius);
+                launchOptionsBlur.setY(blurRadius, inputBitmap.getHeight() - blurRadius);
 
                 // Blur and set values square 
                 main.set_blurRadius(blurRadius);
@@ -194,66 +192,114 @@ public class MainActivity extends AppCompatActivity {
                 main.forEach_fillPngData(inputAllocation);
                 main_fs.forEach_fillPngData(inputAllocation);
 
+                // Allocation used to test subsequent kernel calls
+                int multipleKernelsAllocationElementsCount = 1024 * 256;
+                Allocation multipleKernelsAllocation = Allocation.createSized(mRS, Element.F32(mRS), multipleKernelsAllocationElementsCount);
+                Allocation multipleKernelsAllocationMid = Allocation.createSized(mRS, Element.F32(mRS), multipleKernelsAllocationElementsCount);
+                Allocation multipleKernelsAllocationOut = Allocation.createSized(mRS, Element.F32(mRS), multipleKernelsAllocationElementsCount);
+
+                ScriptC_multipleKernelsTest_merged scriptC_multipleKernelsTest_merged = new ScriptC_multipleKernelsTest_merged(mRS);
+                ScriptC_multipleKernelsTest_first scriptC_multipleKernelsTest_first = new ScriptC_multipleKernelsTest_first(mRS);
+                ScriptC_multipleKernelsTest_second scriptC_multipleKernelsTest_second = new ScriptC_multipleKernelsTest_second(mRS);
+
+                // Fill allocation with random elements
+                scriptC_multipleKernelsTest_first.set_inputAllocation(multipleKernelsAllocation);
+                scriptC_multipleKernelsTest_first.forEach_preFillAllocation(multipleKernelsAllocation);
+                scriptC_multipleKernelsTest_merged.invoke_initializeCallLimits(multipleKernelsAllocation);
+
+                // Launch options are needed as, in multiple kernels test, we target sequential elements
+                Script.LaunchOptions multipleKernelsLaunchOptions = new Script.LaunchOptions();
+                multipleKernelsLaunchOptions.setX(0, multipleKernelsAllocationElementsCount - 1);
+
                 mRS.finish();
                 Log.d(TAG, "Pre filled auxiliary data");
+
+                boolean testBlur = false;
+                boolean testSetValues = false;
+                boolean testGray = false;
+                boolean testMultipleKernels = true;
 
                 // My loop
                 while (true) {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
 
-                    // Adds timing for kernel
-                    main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur");
+                    if(testBlur) {
+                        main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur");
 
-                    main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers)");
+                        main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - (pointers)");
 
-                    main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|rsSet)");
+                        main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - (pointers|rsSet)");
 
-                    main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|rsGet)");
+                        main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - (pointers|rsGet)");
 
-                    main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|ScriptVar)");
+                        main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - (pointers|ScriptVar)");
 
-                    main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - (pointers|ScriptVarPointer)");
+                        main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - (pointers|ScriptVarPointer)");
 
-                    main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - FS (pointers|ScriptVar)");
+                        main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - FS (pointers|ScriptVar)");
 
-                    main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("blur - FilterScript");
+                        main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("blur - FilterScript");
+                    }
 
-                    main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur);
-                    timings.addTiming("setValues");
+                    if(testSetValues) {
+                        main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur);
+                        timings.addTiming("setValues");
 
-                    main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
-                    timings.addTiming("setValues - (pointers)");
+                        main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
+                        timings.addTiming("setValues - (pointers)");
 
-                    main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur);
-                    timings.addTiming("setValues - (pointers|rsSet)");
+                        main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur);
+                        timings.addTiming("setValues - (pointers|rsSet)");
 
-                    main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur);
-                    timings.addTiming("setValues - FilterScript");
+                        main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur);
+                        timings.addTiming("setValues - FilterScript");
+                    }
 
-                    // RGBA to GRAY conversion
-                    main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
-                    timings.addTiming("RGBAtoGRAY");
+                    if(testGray) {
+                        // RGBA to GRAY conversion
+                        main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
+                        timings.addTiming("RGBAtoGRAY");
 
-                    main.forEach_rgbaToGrayPointerAndSet(inputAllocation);
-                    timings.addTiming("RGBAtoGRAY - (pointers|rsSet)");
+                        main.forEach_rgbaToGrayPointerAndSet(inputAllocation);
+                        timings.addTiming("RGBAtoGRAY - (pointers|rsSet)");
 
-                    main.forEach_rgbaToGrayPointerAndGet(grayAllocation);
-                    timings.addTiming("RGBAtoGRAY - (pointers|rsGet)");
+                        main.forEach_rgbaToGrayPointerAndGet(grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - (pointers|rsGet)");
 
-                    main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
-                    timings.addTiming("RGBAtoGRAY - (pointers)");
+                        main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - (pointers)");
 
-                    main_fs.forEach_rgbaToGraySimpleKernelFS(inputAllocation, grayAllocation);
-                    timings.addTiming("RGBAtoGRAY - FilterScript");
+                        main_fs.forEach_rgbaToGraySimpleKernelFS(inputAllocation, grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - FilterScript");
+                    }
+
+                    if(testMultipleKernels) {
+                        // Kernel concatenation
+                        // Tests if kernel calls are faster without switching context or not
+                        // Main tests:
+                        // 1. Multiple kernels called directly from Java
+                        // 2. Multiple kernels invoked using rsForEach
+                        // 3. Single kernel, made merging two kernels in one
+                        scriptC_multipleKernelsTest_first.forEach_root(multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsLaunchOptions);
+                        scriptC_multipleKernelsTest_second.forEach_root(multipleKernelsAllocationMid, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
+                        timings.addTiming("Multiple kernels - divided");
+
+                        scriptC_multipleKernelsTest_merged.invoke_invokeMultipleKernelsCall(scriptC_multipleKernelsTest_first,
+                                scriptC_multipleKernelsTest_second, multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsAllocationOut);
+                        timings.addTiming("Multiple kernels - rsForEach");
+
+                        scriptC_multipleKernelsTest_first.forEach_uniqueKernel(multipleKernelsAllocation, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
+                        timings.addTiming("Multiple kernels - single kernel");
+                    }
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
                     // in case it is.
