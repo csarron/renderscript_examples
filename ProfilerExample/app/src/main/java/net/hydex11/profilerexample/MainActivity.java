@@ -24,8 +24,6 @@
 
 package net.hydex11.profilerexample;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.renderscript.*;
@@ -64,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
     Timings timings;
 
     private void example() {
+
+        System.loadLibrary("native");
+
         // Prevent window dimming
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -160,37 +161,40 @@ public class MainActivity extends AppCompatActivity {
                 // We create two different scripts, that have same kernels. First one is
                 // standard RenderScript, second one uses FilterScript approach. This way
                 // you can see differences in performance.
-                ScriptC_main main = new ScriptC_main(mRS);
-                ScriptC_main_fs main_fs = new ScriptC_main_fs(mRS);
+                ScriptC_main scriptC_main = new ScriptC_main(mRS);
+                ScriptC_main_fs scriptC_main_fs = new ScriptC_main_fs(mRS);
 
-                main.set_inputAllocation(inputAllocation);
-                main.set_grayAllocation(grayAllocation);
-                main.set_outputAllocation(outputAllocation);
-                main_fs.set_inputAllocation(inputAllocation);
-                main_fs.set_outputAllocation(outputAllocation);
+                scriptC_main.set_inputAllocation(inputAllocation);
+                scriptC_main.set_grayAllocation(grayAllocation);
+                scriptC_main.set_outputAllocation(outputAllocation);
+                scriptC_main_fs.set_inputAllocation(inputAllocation);
+                scriptC_main_fs.set_outputAllocation(outputAllocation);
 
-                main.set_width(inputBitmap.getWidth());
-                main.set_height(inputBitmap.getHeight());
-                main_fs.set_width(inputBitmap.getWidth());
-                main_fs.set_height(inputBitmap.getHeight());
+                scriptC_main.set_width(inputBitmap.getWidth());
+                scriptC_main.set_height(inputBitmap.getHeight());
+                scriptC_main_fs.set_width(inputBitmap.getWidth());
+                scriptC_main_fs.set_height(inputBitmap.getHeight());
 
                 Log.d(TAG, String.format("Loaded bitmap with size %d x %d", inputBitmap.getWidth(), inputBitmap.getHeight()));
+                setImageSize(inputBitmap.getWidth(), inputBitmap.getHeight());
+                loadInputImage(inputBitmap);
 
-                int blurRadius = 3;
+                // Multiple blur radiuses are tested, to notice differences between mass memory access or not.
+                int blurRadiusVariants[] = new int[]{1, 3, 5};
 
                 // Here we set the launch options for the kernels, to prevent the
                 // blur pointers from overflowing
-                Script.LaunchOptions launchOptionsBlur = new Script.LaunchOptions();
-                launchOptionsBlur.setX(blurRadius, inputBitmap.getWidth() - blurRadius);
-                launchOptionsBlur.setY(blurRadius, inputBitmap.getHeight() - blurRadius);
+                Script.LaunchOptions launchOptionsBlur[] = new Script.LaunchOptions[blurRadiusVariants.length];
 
-                // Blur and set values square 
-                main.set_blurRadius(blurRadius);
-                main_fs.set_blurRadius(blurRadius);
+                for (int i = 0; i < blurRadiusVariants.length; i++) {
+                    launchOptionsBlur[i] = new Script.LaunchOptions();
+                    launchOptionsBlur[i].setX(blurRadiusVariants[i], inputBitmap.getWidth() - blurRadiusVariants[i]);
+                    launchOptionsBlur[i].setY(blurRadiusVariants[i], inputBitmap.getHeight() - blurRadiusVariants[i]);
+                }
 
                 // Set in-script variable
-                main.forEach_fillPngData(inputAllocation);
-                main_fs.forEach_fillPngData(inputAllocation);
+                scriptC_main.forEach_fillPngData(inputAllocation);
+                scriptC_main_fs.forEach_fillPngData(inputAllocation);
 
                 // Allocation used to test subsequent kernel calls
                 int multipleKernelsAllocationElementsCount = 1024 * 256;
@@ -201,88 +205,124 @@ public class MainActivity extends AppCompatActivity {
                 ScriptC_multipleKernelsTest_merged scriptC_multipleKernelsTest_merged = new ScriptC_multipleKernelsTest_merged(mRS);
                 ScriptC_multipleKernelsTest_first scriptC_multipleKernelsTest_first = new ScriptC_multipleKernelsTest_first(mRS);
                 ScriptC_multipleKernelsTest_second scriptC_multipleKernelsTest_second = new ScriptC_multipleKernelsTest_second(mRS);
+                ScriptC_multipleKernelsTest_unique scriptC_multipleKernelsTest_unique = new ScriptC_multipleKernelsTest_unique(mRS);
 
                 // Fill allocation with random elements
                 scriptC_multipleKernelsTest_first.set_inputAllocation(multipleKernelsAllocation);
+                scriptC_multipleKernelsTest_unique.set_inputAllocation(multipleKernelsAllocation);
                 scriptC_multipleKernelsTest_first.forEach_preFillAllocation(multipleKernelsAllocation);
                 scriptC_multipleKernelsTest_merged.invoke_initializeCallLimits(multipleKernelsAllocation);
 
                 // Launch options are needed as, in multiple kernels test, we target sequential elements
                 Script.LaunchOptions multipleKernelsLaunchOptions = new Script.LaunchOptions();
-                multipleKernelsLaunchOptions.setX(0, multipleKernelsAllocationElementsCount - 1);
+                multipleKernelsLaunchOptions.setX(1, multipleKernelsAllocationElementsCount - 1);
+
+                // Recursion test
+                int piIterations[] = new int[]{1500, 3000, 6000, 12000};
+                int piTestElementsCount = 128;
+                Allocation piTestAllocation = Allocation.createSized(mRS, Element.F32(mRS), piTestElementsCount);
+                checkOpenMPEnabled();
 
                 mRS.finish();
                 Log.d(TAG, "Pre filled auxiliary data");
 
-                boolean testBlur = false;
-                boolean testSetValues = false;
-                boolean testGray = false;
+                boolean testBlur = true;
+                boolean testSetValues = true;
+                boolean testGray = true;
                 boolean testMultipleKernels = true;
+                boolean testPI = true;
 
                 // My loop
                 while (true) {
                     // Calling this function, the profiler sets current time as initial one
                     timings.initTimings();
 
-                    if(testBlur) {
-                        main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur");
+                    if (testBlur) {
+                        for (int i = 0; i < blurRadiusVariants.length; i++) {
+                            int currentRadius = blurRadiusVariants[i];
+                            // Blur and set values square 
+                            scriptC_main.set_blurRadius(currentRadius);
+                            scriptC_main_fs.set_blurRadius(currentRadius);
+                            ndkSetBlurData(currentRadius);
 
-                        main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - (pointers)");
+                            // Set functions may have taken time
+                            timings.resetLastTimingsTimestamp();
 
-                        main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - (pointers|rsSet)");
+                            scriptC_main.forEach_blurSimpleKernel(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - simple kernel", currentRadius);
 
-                        main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - (pointers|rsGet)");
+                            scriptC_main.forEach_blurPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - pointers", currentRadius);
 
-                        main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - (pointers|ScriptVar)");
+                            scriptC_main.forEach_blurPointerKernelSet(inputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - pointers - rsSet", currentRadius);
 
-                        main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - (pointers|ScriptVarPointer)");
+                            scriptC_main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - pointers - rsGet", currentRadius);
 
-                        main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - FS (pointers|ScriptVar)");
+                            scriptC_main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - pointers - ScriptVar", currentRadius);
 
-                        main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("blur - FilterScript");
+                            scriptC_main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - pointers - ScriptVarPointer", currentRadius);
+
+                            scriptC_main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - FilterScript - ScriptVar", currentRadius);
+
+                            scriptC_main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("blur%d - FilterScript", currentRadius);
+
+                            ndkBlur();
+                            timings.addTiming("blur%d - NDK", currentRadius);
+                        }
                     }
 
-                    if(testSetValues) {
-                        main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur);
-                        timings.addTiming("setValues");
+                    if (testSetValues) {
+                        for (int i = 0; i < blurRadiusVariants.length; i++) {
+                            int currentRadius = blurRadiusVariants[i];
+                            // Blur and set values square
+                            scriptC_main.set_blurRadius(currentRadius);
+                            scriptC_main_fs.set_blurRadius(currentRadius);
 
-                        main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur);
-                        timings.addTiming("setValues - (pointers)");
+                            // Set functions may have taken time
+                            timings.resetLastTimingsTimestamp();
 
-                        main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur);
-                        timings.addTiming("setValues - (pointers|rsSet)");
+                            scriptC_main.forEach_setValuesSimpleKernel(inputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("setValues%d - simple kernel", currentRadius);
 
-                        main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur);
-                        timings.addTiming("setValues - FilterScript");
+                            scriptC_main.forEach_setValuesPointerKernel(inputAllocation, outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("setValues%d - pointers", currentRadius);
+
+                            scriptC_main.forEach_setValuesPointerKernelSet(inputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("setValues%d - pointers - rsSet", currentRadius);
+
+                            scriptC_main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur[i]);
+                            timings.addTiming("setValues%d - FilterScript", currentRadius);
+                        }
                     }
 
-                    if(testGray) {
+                    if (testGray) {
                         // RGBA to GRAY conversion
-                        main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
-                        timings.addTiming("RGBAtoGRAY");
+                        scriptC_main.forEach_rgbaToGrayNoPointer(inputAllocation, grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - simple kernel");
 
-                        main.forEach_rgbaToGrayPointerAndSet(inputAllocation);
-                        timings.addTiming("RGBAtoGRAY - (pointers|rsSet)");
+                        scriptC_main.forEach_rgbaToGrayPointerAndSet(inputAllocation);
+                        timings.addTiming("RGBAtoGRAY - pointers - rsSet");
 
-                        main.forEach_rgbaToGrayPointerAndGet(grayAllocation);
-                        timings.addTiming("RGBAtoGRAY - (pointers|rsGet)");
+                        scriptC_main.forEach_rgbaToGrayPointerAndGet(grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - pointers - rsGet");
 
-                        main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
-                        timings.addTiming("RGBAtoGRAY - (pointers)");
+                        scriptC_main.forEach_rgbaToGrayPointerAndOut(inputAllocation, grayAllocation);
+                        timings.addTiming("RGBAtoGRAY - pointers");
 
-                        main_fs.forEach_rgbaToGraySimpleKernelFS(inputAllocation, grayAllocation);
+                        scriptC_main_fs.forEach_rgbaToGraySimpleKernelFS(inputAllocation, grayAllocation);
                         timings.addTiming("RGBAtoGRAY - FilterScript");
+
+                        rgbaToGray();
+                        timings.addTiming("RGBAtoGRAY - NDK");
                     }
 
-                    if(testMultipleKernels) {
+                    if (testMultipleKernels) {
                         // Kernel concatenation
                         // Tests if kernel calls are faster without switching context or not
                         // Main tests:
@@ -297,8 +337,32 @@ public class MainActivity extends AppCompatActivity {
                                 scriptC_multipleKernelsTest_second, multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsAllocationOut);
                         timings.addTiming("Multiple kernels - rsForEach");
 
-                        scriptC_multipleKernelsTest_first.forEach_uniqueKernel(multipleKernelsAllocation, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
+                        scriptC_multipleKernelsTest_unique.forEach_root(multipleKernelsAllocation, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
                         timings.addTiming("Multiple kernels - single kernel");
+
+                        scriptC_multipleKernelsTest_merged.invoke_invokeSingleKernelCall(scriptC_multipleKernelsTest_unique, multipleKernelsAllocation, multipleKernelsAllocationOut);
+                        timings.addTiming("Multiple kernels - rsForEach - single kernel");
+                    }
+                    if(testPI)
+                    {
+                        for(int i = 0; i < piIterations.length; i++) {
+                            int currentIterations = piIterations[i];
+                            scriptC_main.set_piIterations(currentIterations);
+                            scriptC_main_fs.set_piIterations(currentIterations);
+
+                            // Set functions may have taken time
+                            timings.resetLastTimingsTimestamp();
+
+                            // Tests PI calculation
+                            scriptC_main.forEach_PITestSimpleKernel(piTestAllocation);
+                            timings.addTiming("PI%d - simple kernel", currentIterations);
+
+                            scriptC_main_fs.forEach_PITestSimpleKernel(piTestAllocation);
+                            timings.addTiming("PI%d - FilterScript - simple kernel", currentIterations);
+
+                            calculatePI(piTestElementsCount, currentIterations);
+                            timings.addTiming("PI%d - NDK", currentIterations);
+                        }
                     }
 
                     // Checks if this cycle is the correct one for debugging timings and outputs them
@@ -319,5 +383,14 @@ public class MainActivity extends AppCompatActivity {
         });
         exampleThread.start();
     }
+
+    // Native functions
+    private static native void loadInputImage(Bitmap data);
+    private static native void setImageSize(int imageWidth, int imageHeight);
+    private static native void calculatePI(int parallelExecutions, int piIterations);
+    private static native void checkOpenMPEnabled();
+    private static native void rgbaToGray();
+    private static native void ndkSetBlurData(int blurRadius);
+    private static native void ndkBlur();
 
 }

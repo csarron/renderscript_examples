@@ -205,3 +205,26 @@ void rgbaToGrayPointerAndOut(const uchar4 * v_in, uchar * v_out, uint32_t x, uin
                       (float)v_in->b*grayMultipliers.b);
 }
 
+// PI test
+int piIterations = 30;
+// Test for pure calculation
+// Reference: http://www.codeproject.com/Articles/813185/Calculating-the-Number-PI-Through-Infinite-Sequenc
+static float piTest() {
+   float i;    // Number of iterations and control variable
+  float s = 1;   //Signal for the next operation
+  float pi = 3;
+
+  for(i = 2; i <= piIterations*2; i += 2){
+    pi = pi + s * (4 / (i * (i + 1) * (i + 2)));
+    s = -s;
+  }
+
+  return pi;
+
+}
+
+float __attribute__((kernel)) PITestSimpleKernel(){
+
+    return piTest();
+
+}

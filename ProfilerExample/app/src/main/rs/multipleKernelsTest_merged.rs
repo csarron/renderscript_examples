@@ -11,7 +11,7 @@ void initializeCallLimits(rs_allocation inputAllocation){
 
     int elementsCount = rsAllocationGetDimX(inputAllocation);
 
-    kernelCallLimits.xStart = 0;
+    kernelCallLimits.xStart = 1;
     kernelCallLimits.xEnd = elementsCount - 1;
     kernelCallLimits.yStart = 0;
     kernelCallLimits.yEnd = 0;
@@ -25,6 +25,12 @@ void invokeMultipleKernelsCall(rs_script scriptFirst, rs_script scriptSecond,
 
 	rsForEach(scriptFirst, inputAllocation, midAllocation, NULL, 0, &kernelCallLimits);
 	rsForEach(scriptSecond, midAllocation, outputAllocation, NULL, 0, &kernelCallLimits);
+
+}
+
+void invokeSingleKernelCall(rs_script scriptUnique, rs_allocation inputAllocation, rs_allocation outputAllocation){
+
+	rsForEach(scriptUnique, inputAllocation, outputAllocation, NULL, 0, &kernelCallLimits);
 
 }
 
