@@ -1,3 +1,4 @@
+// Reference: http://www.codeproject.com/Articles/813185/Calculating-the-Number-PI-Through-Infinite-Sequenc
 float piTest(int piIterations) {
    float i;    // Number of iterations and control variable
   float s = 1;   //Signal for the next operation

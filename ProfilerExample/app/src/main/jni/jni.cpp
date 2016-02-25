@@ -78,7 +78,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkSetBlurD
 JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkBlur(JNIEnv* env, jobject)
 {
 // Here totalGrayPixels is used because it represents each pixel package
-    #pragma omp parallel for shared(blurPadding, blurTotalCount)
+    #pragma omp parallel for shared(blurRadius, blurPadding, blurTotalCount)
     for(int i = blurPadding; i < totalGrayPixels - blurPadding - 1; i++) {
 
         int sum[] = { 0, 0, 0};
@@ -86,7 +86,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkBlur(JNI
         for(int yi = -blurRadius; yi <= blurRadius; ++yi) {
             for(int xi = -blurRadius; xi <= blurRadius; ++xi) {
                 
-                int pixelIndex = currentRGBAIndex + xi + yi*imageWidth;
+                int pixelIndex = currentRGBAIndex + (xi + yi*imageWidth)*4;
 
                 sum[0] += rgbaImagePointer[pixelIndex];
                 sum[1] += rgbaImagePointer[pixelIndex + 1];
@@ -97,6 +97,33 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkBlur(JNI
         rgbaOutputImagePointer[currentRGBAIndex] = sum[0] / blurTotalCount;
         rgbaOutputImagePointer[currentRGBAIndex + 1] = sum[1] / blurTotalCount;
         rgbaOutputImagePointer[currentRGBAIndex + 2] = sum[2] / blurTotalCount;
+    }
+}
+
+JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkSetValues(JNIEnv* env, jobject)
+{
+// Here totalGrayPixels is used because it represents each pixel package
+    #pragma omp parallel for shared(blurRadius, blurPadding, blurTotalCount)
+    for(int i = blurPadding; i < totalGrayPixels - blurPadding - 1; i++) {
+
+        int currentRGBAIndex = i * 4;
+        byte currentElement[3];
+        
+        currentElement[0] = rgbaImagePointer[currentRGBAIndex];
+        currentElement[1] = rgbaImagePointer[currentRGBAIndex+1];
+        currentElement[2] = rgbaImagePointer[currentRGBAIndex+2];
+        
+        for(int yi = -blurRadius; yi <= blurRadius; ++yi) {
+            for(int xi = -blurRadius; xi <= blurRadius; ++xi) {
+                
+                int pixelIndex = currentRGBAIndex + (xi + yi*imageWidth)*4;
+                
+                rgbaOutputImagePointer[pixelIndex]  = currentElement[0];
+                rgbaOutputImagePointer[pixelIndex+1]  = currentElement[1];
+                rgbaOutputImagePointer[pixelIndex+2]  = currentElement[2];
+                rgbaOutputImagePointer[pixelIndex+3]  = 255;
+            }
+        }
     }
 }
 

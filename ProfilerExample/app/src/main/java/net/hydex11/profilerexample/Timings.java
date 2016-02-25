@@ -89,7 +89,8 @@ public class Timings {
             // Creates a custom folder inside the external dir
             File rsProfilerDir = new File(Environment.getExternalStorageDirectory() + File.separator + "RSProfiler");
             rsProfilerDir.mkdirs();
-            File csvFile = new File(rsProfilerDir, "RSProfilerData" + Build.MODEL.replace("\\s", "") + ".csv");
+            String phoneDataString = String.format("%s_%d", Build.MODEL.replaceAll("\\s", ""), Build.VERSION.SDK_INT);
+            File csvFile = new File(rsProfilerDir, "RSProfilerData_" + phoneDataString + ".csv");
             statsFileUri = Uri.fromFile(csvFile);
             // Instantiates a new buffered writer
             statsFileWriter = new BufferedWriter(new FileWriter(csvFile));

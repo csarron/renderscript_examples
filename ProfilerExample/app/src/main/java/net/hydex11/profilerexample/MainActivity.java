@@ -283,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
                             // Blur and set values square
                             scriptC_main.set_blurRadius(currentRadius);
                             scriptC_main_fs.set_blurRadius(currentRadius);
+                            ndkSetBlurData(currentRadius);
 
                             // Set functions may have taken time
                             timings.resetLastTimingsTimestamp();
@@ -298,6 +299,9 @@ public class MainActivity extends AppCompatActivity {
 
                             scriptC_main_fs.forEach_setValuesSimpleKernelFS(outputAllocation, launchOptionsBlur[i]);
                             timings.addTiming("setValues%d - FilterScript", currentRadius);
+
+                            ndkSetValues();
+                            timings.addTiming("setValues%d - NDK", currentRadius);
                         }
                     }
 
@@ -392,5 +396,6 @@ public class MainActivity extends AppCompatActivity {
     private static native void rgbaToGray();
     private static native void ndkSetBlurData(int blurRadius);
     private static native void ndkBlur();
+    private static native void ndkSetValues();
 
 }
