@@ -23,14 +23,21 @@ void initializeCallLimits(rs_allocation inputAllocation){
 void invokeMultipleKernelsCall(rs_script scriptFirst, rs_script scriptSecond,
     rs_allocation inputAllocation, rs_allocation midAllocation, rs_allocation outputAllocation){
 
-	rsForEach(scriptFirst, inputAllocation, midAllocation, NULL, 0, &kernelCallLimits);
-	rsForEach(scriptSecond, midAllocation, outputAllocation, NULL, 0, &kernelCallLimits);
+    #if (defined(RS_VERSION) && (RS_VERSION >= 21))
+    // This test cannot be run on >= 21
+    #else
+    rsForEach(scriptFirst, inputAllocation, midAllocation, NULL, 0, &kernelCallLimits);
+    rsForEach(scriptSecond, midAllocation, outputAllocation, NULL, 0, &kernelCallLimits);
+    #endif
 
 }
 
 void invokeSingleKernelCall(rs_script scriptUnique, rs_allocation inputAllocation, rs_allocation outputAllocation){
 
+    #if (defined(RS_VERSION) && (RS_VERSION >= 21))
+    #else
 	rsForEach(scriptUnique, inputAllocation, outputAllocation, NULL, 0, &kernelCallLimits);
+    #endif
 
 }
 

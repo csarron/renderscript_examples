@@ -26,6 +26,7 @@ package net.hydex11.profilerexample;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -83,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
 
         logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
 
+        if (PURE_PROFILING)
+            logView.addLogLine("Test will end automatically. Please wait. Test can take up to 2 minutes to end.\n");
+
         // Add our console view to the window
         linearLayout.addView(logView);
 
@@ -121,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 // Instantiate our RS context
-                boolean debug = false; // BuildConfig.DEBUG;
+                boolean debug = true; // BuildConfig.DEBUG;
                 final RenderScript mRS = RenderScript.create(MainActivity.this, debug ? RenderScript.ContextType.DEBUG : RenderScript.ContextType.NORMAL);
 
                 // Load input image
@@ -193,8 +197,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 // Set in-script variable
-                scriptC_main.forEach_fillPngData(inputAllocation);
-                scriptC_main_fs.forEach_fillPngData(inputAllocation);
+
+                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    scriptC_main.forEach_fillPngData(inputAllocation);
+                    scriptC_main_fs.forEach_fillPngData(inputAllocation);
+                }
 
                 // Allocation used to test subsequent kernel calls
                 int multipleKernelsAllocationElementsCount = 1024 * 256;
@@ -260,14 +267,16 @@ public class MainActivity extends AppCompatActivity {
                             scriptC_main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur[i]);
                             timings.addTiming("blur%d - pointers - rsGet", currentRadius);
 
-                            scriptC_main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
-                            timings.addTiming("blur%d - pointers - ScriptVar", currentRadius);
+                            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                                scriptC_main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
+                                timings.addTiming("blur%d - pointers - ScriptVar", currentRadius);
 
-                            scriptC_main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur[i]);
-                            timings.addTiming("blur%d - pointers - ScriptVarPointer", currentRadius);
+                                scriptC_main.forEach_blurPointerKernelGetFromScriptVariablePointer(outputAllocation, launchOptionsBlur[i]);
+                                timings.addTiming("blur%d - pointers - ScriptVarPointer", currentRadius);
 
-                            scriptC_main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
-                            timings.addTiming("blur%d - FilterScript - ScriptVar", currentRadius);
+                                scriptC_main_fs.forEach_blurSimpleKernelFSGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
+                                timings.addTiming("blur%d - FilterScript - ScriptVar", currentRadius);
+                            }
 
                             scriptC_main_fs.forEach_blurSimpleKernelFS(outputAllocation, launchOptionsBlur[i]);
                             timings.addTiming("blur%d - FilterScript", currentRadius);
@@ -337,19 +346,21 @@ public class MainActivity extends AppCompatActivity {
                         scriptC_multipleKernelsTest_second.forEach_root(multipleKernelsAllocationMid, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
                         timings.addTiming("Multiple kernels - divided");
 
-                        scriptC_multipleKernelsTest_merged.invoke_invokeMultipleKernelsCall(scriptC_multipleKernelsTest_first,
-                                scriptC_multipleKernelsTest_second, multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsAllocationOut);
-                        timings.addTiming("Multiple kernels - rsForEach");
+                        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            scriptC_multipleKernelsTest_merged.invoke_invokeMultipleKernelsCall(scriptC_multipleKernelsTest_first,
+                                    scriptC_multipleKernelsTest_second, multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsAllocationOut);
+                            timings.addTiming("Multiple kernels - rsForEach");
+
+                            scriptC_multipleKernelsTest_merged.invoke_invokeSingleKernelCall(scriptC_multipleKernelsTest_unique, multipleKernelsAllocation, multipleKernelsAllocationOut);
+                            timings.addTiming("Multiple kernels - rsForEach - single kernel");
+
+                        }
 
                         scriptC_multipleKernelsTest_unique.forEach_root(multipleKernelsAllocation, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
                         timings.addTiming("Multiple kernels - single kernel");
-
-                        scriptC_multipleKernelsTest_merged.invoke_invokeSingleKernelCall(scriptC_multipleKernelsTest_unique, multipleKernelsAllocation, multipleKernelsAllocationOut);
-                        timings.addTiming("Multiple kernels - rsForEach - single kernel");
                     }
-                    if(testPI)
-                    {
-                        for(int i = 0; i < piIterations.length; i++) {
+                    if (testPI) {
+                        for (int i = 0; i < piIterations.length; i++) {
                             int currentIterations = piIterations[i];
                             scriptC_main.set_piIterations(currentIterations);
                             scriptC_main_fs.set_piIterations(currentIterations);
@@ -390,12 +401,19 @@ public class MainActivity extends AppCompatActivity {
 
     // Native functions
     private static native void loadInputImage(Bitmap data);
+
     private static native void setImageSize(int imageWidth, int imageHeight);
+
     private static native void calculatePI(int parallelExecutions, int piIterations);
+
     private static native void checkOpenMPEnabled();
+
     private static native void rgbaToGray();
+
     private static native void ndkSetBlurData(int blurRadius);
+
     private static native void ndkBlur();
+
     private static native void ndkSetValues();
 
 }

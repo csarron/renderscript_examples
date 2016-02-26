@@ -27,6 +27,7 @@ uchar4 __attribute__((kernel)) blurSimpleKernelFS(uint32_t x, uint32_t y) {
 }
 
 // Test an allocation directly loaded inside a script
+#if (defined(RS_VERSION) && (RS_VERSION < 21))
 const int pngWidth = 500;
 const int pngHeight = 286;
 uchar4 pngData[pngWidth * pngHeight];
@@ -53,6 +54,10 @@ uchar4 __attribute__((kernel)) blurSimpleKernelFSGetFromScriptVariable(uint32_t 
 
     return convert_uchar4(sum/count);
 }
+#else
+void __attribute__((kernel)) fillPngData(uchar4 in, uint32_t x, uint32_t y){}
+uchar4 __attribute__((kernel)) blurSimpleKernelFSGetFromScriptVariable(uint32_t x, uint32_t y) { uchar4 out; return out; }
+#endif
 
 // Set tons of values, using radius blur
 void __attribute__((kernel)) setValuesSimpleKernelFS(uchar4 in, int x, int y){

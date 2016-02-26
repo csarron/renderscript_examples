@@ -79,6 +79,8 @@ void blurPointerKernelGet(uchar4 * v_out, uint32_t x, uint32_t y) {
 }
 
 // Test an allocation directly loaded inside a script
+// Execute only on API < 21
+#if (defined(RS_VERSION) && (RS_VERSION < 21))
 const int pngWidth = 500;
 const int pngHeight = 286;
 uchar4 pngData[pngWidth * pngHeight];
@@ -123,6 +125,11 @@ void blurPointerKernelGetFromScriptVariablePointer(uchar4 * v_out, uint32_t x, u
 
     *v_out = convert_uchar4(sum/count);
 }
+#else
+void fillPngData(const uchar4 * v_in, uint32_t x, uint32_t y){}
+void blurPointerKernelGetFromScriptVariable(uchar4 * v_out, uint32_t x, uint32_t y) {}
+void blurPointerKernelGetFromScriptVariablePointer(uchar4 * v_out, uint32_t x, uint32_t y) {}
+#endif
 
 // Square set values
 // Following functions set a predefined count of values in the output allocation,
