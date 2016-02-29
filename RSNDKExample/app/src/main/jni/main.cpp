@@ -3,3 +3,13 @@
 //
 
 #include "main.h"
+
+#include "ScriptC_main.h"
+
+extern "C" {
+    
+    JNI_FUNCTION(void, init){
+        
+    }
+    
+}
