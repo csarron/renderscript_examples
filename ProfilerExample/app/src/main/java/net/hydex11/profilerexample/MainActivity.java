@@ -48,6 +48,10 @@ public class MainActivity extends AppCompatActivity {
     // - Application will automatically end after n cycles (defined below)
     private static final boolean PURE_PROFILING = true;
 
+    // Flag to disable some kernel calls if on Lollipop and greater.
+    // Used when renderscriptTargetApi is >= 21
+    private static final boolean DISABLE_POST_LOLLIPOP = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,11 +74,6 @@ public class MainActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         timings = new Timings(this);
-        try {
-            timings.enableSaveStats(true);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create temporary CSV file", e);
-        }
 
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 // Instantiate our RS context
-                boolean debug = true; // BuildConfig.DEBUG;
+                boolean debug = false; // BuildConfig.DEBUG;
                 final RenderScript mRS = RenderScript.create(MainActivity.this, debug ? RenderScript.ContextType.DEBUG : RenderScript.ContextType.NORMAL);
 
                 // Load input image
@@ -153,11 +152,22 @@ public class MainActivity extends AppCompatActivity {
                         mRS.finish();
                     }
                 });
+                timings.setEndCallback(new Timings.TimingCallback() {
+                    @Override
+                    public void run() {
+                        mRS.destroy();
+                    }
+                });
 
                 // Averaging will run every 10 cycles
                 timings.setTimingDebugInterval(50);
 
                 if (PURE_PROFILING) {
+                    try {
+                        timings.enableSaveStats(true);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Could not create temporary CSV file", e);
+                    }
                     // After n total samples, application will exit and saved CSV data will be sent
                     timings.setStatsSaveCountLimit(16000);
                 }
@@ -198,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Set in-script variable
 
-                if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                if (!DISABLE_POST_LOLLIPOP || (DISABLE_POST_LOLLIPOP && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)) {
                     scriptC_main.forEach_fillPngData(inputAllocation);
                     scriptC_main_fs.forEach_fillPngData(inputAllocation);
                 }
@@ -267,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
                             scriptC_main.forEach_blurPointerKernelGet(outputAllocation, launchOptionsBlur[i]);
                             timings.addTiming("blur%d - pointers - rsGet", currentRadius);
 
-                            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            if (!DISABLE_POST_LOLLIPOP || (DISABLE_POST_LOLLIPOP && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)) {
                                 scriptC_main.forEach_blurPointerKernelGetFromScriptVariable(outputAllocation, launchOptionsBlur[i]);
                                 timings.addTiming("blur%d - pointers - ScriptVar", currentRadius);
 
@@ -346,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                         scriptC_multipleKernelsTest_second.forEach_root(multipleKernelsAllocationMid, multipleKernelsAllocationOut, multipleKernelsLaunchOptions);
                         timings.addTiming("Multiple kernels - divided");
 
-                        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        if (!DISABLE_POST_LOLLIPOP || (DISABLE_POST_LOLLIPOP && Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)) {
                             scriptC_multipleKernelsTest_merged.invoke_invokeMultipleKernelsCall(scriptC_multipleKernelsTest_first,
                                     scriptC_multipleKernelsTest_second, multipleKernelsAllocation, multipleKernelsAllocationMid, multipleKernelsAllocationOut);
                             timings.addTiming("Multiple kernels - rsForEach");

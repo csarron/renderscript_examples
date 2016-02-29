@@ -63,6 +63,7 @@ public class Timings {
     // Callback function (sync) to be used before taking the current time. Useful to test single
     // RenderScript kernels, as we can this way call mRS.finish() before each of them
     private TimingCallback timingCallback;
+    private TimingCallback endCallback;
 
     // Sets desired cycles count when we want the output to be written to LogCat
     public void setTimingDebugInterval(int timingDebugInterval) {
@@ -72,6 +73,10 @@ public class Timings {
     // Sets custom function to be called before each timing cycle
     public void setTimingCallback(TimingCallback timingCallback) {
         this.timingCallback = timingCallback;
+    }
+    // Sets custom function to be called before closing app
+    public void setEndCallback(TimingCallback endCallback) {
+        this.endCallback = endCallback;
     }
 
     // Enables stats to be saved to disk
@@ -183,9 +188,14 @@ public class Timings {
         timings.get(tag).add(elapsed);
         totalSamples++;
 
-        if (statSaveCountLimit > 0 && totalSamples >= statSaveCountLimit) {
+        if (saveStatsToDisk && statSaveCountLimit > 0 && totalSamples >= statSaveCountLimit) {
             try {
                 sendStats();
+
+                if(endCallback != null)
+                    endCallback.run();
+
+                ((MainActivity) context).finishAffinity();
                 System.exit(0);
             } catch (IOException e) {
                 throw new RuntimeException("Could not send saved data", e);

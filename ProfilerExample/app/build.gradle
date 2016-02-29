@@ -39,14 +39,14 @@ android {
     buildToolsVersion "23.0.2"
     defaultConfig {
         applicationId "net.hydex11.profilerexample"
-        minSdkVersion 21
+        minSdkVersion 18
         // Fast hack, NOT production ready, to write files on API 23 devices without asking for
         // permissions.
         targetSdkVersion 22
-        versionCode 2
+        versionCode 4
         versionName "1.0"
 
-        renderscriptTargetApi 21
+        renderscriptTargetApi 18
 
     }
     buildTypes {
