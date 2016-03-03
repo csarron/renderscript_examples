@@ -5,22 +5,15 @@ LOCAL_MODULE := RSNDK
 LOCAL_LDLIBS += -llog -landroid -lc -lz -lm
 
 # RS setup
-ndkLibDir := $(ANDROID_NDK)/platforms/android-19/arch-arm/usr/lib/rs
-ndkIncludeDir := $(ANDROID_NDK)/platforms/android-19/arch-arm/usr/include
+ndkLibDir := $(NDK_DIR)/platforms/android-19/arch-arm/usr/lib/rs
+ndkIncludeDir := $(NDK_DIR)/platforms/android-19/arch-arm/usr/include
 
 LOCAL_C_INCLUDES += $(ndkIncludeDir)/rs $(ndkIncludeDir)/rs/cpp $(ndkIncludeDir)/rs/scriptc
-LOCAL_C_INCLUDES += ../../../build//rs/scriptc
+LOCAL_C_INCLUDES += build/generated/source/rs/debug
 LOCAL_LDLIBS += $(ndkLibDir)/libRScpp_static.a
 
+$(info ANDROID_NDK: $(NDK_DIR))
 
-RS_SOURCES := $(patsubst ./%,%, \
-$(shell cd $(LOCAL_PATH) ; \
-          find -L ../rs \( -name "*.rs" -or -name "*.fs" \) -and -not -name ".*") \
-)
-
-$(info LOCAL_PATH: $(LOCAL_PATH))
-$(info RS_SOURCES: $(RS_SOURCES))
-
-LOCAL_SRC_FILES := main.cpp $(RS_SOURCES)
+LOCAL_SRC_FILES := main.cpp
 
 include $(BUILD_SHARED_LIBRARY)
