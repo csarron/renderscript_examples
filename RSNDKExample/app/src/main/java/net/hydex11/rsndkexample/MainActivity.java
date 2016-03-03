@@ -17,7 +17,11 @@ public class MainActivity extends AppCompatActivity {
 
         System.loadLibrary("RSNDK");
 
-
+        // Initialize RS context
+        initRenderScript(getCacheDir().getAbsolutePath());
 
     }
+
+    private static native void initRenderScript(String cacheDir);
+    private static native void ndkExample();
 }
