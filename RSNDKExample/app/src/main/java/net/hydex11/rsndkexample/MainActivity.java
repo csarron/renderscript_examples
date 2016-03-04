@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "RSNDKExample";
+    private static final String TAG = "RSJava";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,13 +20,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void example() {
 
+        System.loadLibrary("gnustl_shared");
         System.loadLibrary("RSNDK");
 
         // Initialize log view
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
         // Create a view to see LogCat log
-        LogView logView = new LogView(this, "RSNDKExample",5);
+        LogView logView = new LogView(this, new String[]{"RSNDK", "RSJava"},5);
         logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
@@ -34,15 +35,16 @@ public class MainActivity extends AppCompatActivity {
         // Add our console view to the window
         linearLayout.addView(logView);
 
-        Log.d(TAG, "Java: initializing RS context");
+        Log.d(TAG, "Initializing RS context");
 
         // Initialize RS context
-        initRenderScript(getCacheDir().getAbsolutePath());
+        String cacheDirPath = getCacheDir().toString();
+        initRenderScript(cacheDirPath);
 
-        Log.d(TAG, "Java: initializing example");
+        Log.d(TAG, "Initializing example");
         ndkExample();
     }
 
-    private static native void initRenderScript(String cacheDir);
+    private static native void initRenderScript(String cacheDir); //, int stringLength);
     private static native void ndkExample();
 }

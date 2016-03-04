@@ -6,18 +6,33 @@
 
 #include "ScriptC_main.h"
 
+#include "catcher/coffeecatch.h"
+#include "catcher/coffeejni.h"
+
 using namespace android::RSC;
 
 sp<RS> mRS;
 
+// RenderScript error handler function
+void rsErrorHandlerFunction(uint32_t errorNum, const char* errorText)
+{
+    LOGE("RS error: %s", errorText);
+}
+
 // Initialize RenderScript context
-void initRS(const char* cacheDir)
+void initRS(const char* cacheDir) //, const int cacheDirStringLength)
 {
 
-	LOGD("NDK: creating new RS context");
+    LOGD("Creating new RS context");
     mRS = new RS();
-	LOGD("NDK: initializing new RS context with cache dir: %s", cacheDir);
-    mRS->init(cacheDir);
+
+    LOGD("Setting RS error function");
+    // Set function to handle errors, when thrown
+    mRS->setErrorHandler(&rsErrorHandlerFunction);
+
+    LOGD("Initializing new RS context with cache dir: %s", cacheDir);
+
+    mRS->init(cacheDir); //, RS_CONTEXT_TYPE_DEBUG);
 }
 
 // Debug function that copies allocation contents and print it
@@ -26,10 +41,10 @@ void debugAllocationSimpleCopy(char* tag, sp<Allocation> dAllocation)
 
     // Retrieve elements count
     const int xSize = dAllocation->getType()->getX();
-    
+
     // Copies allocation contents to local array
     int localCopy[xSize];
-    dAllocation->copy1DTo((void*) localCopy);
+    dAllocation->copy1DTo((void*)localCopy);
 
     char debugString[255];
 
@@ -48,6 +63,8 @@ void debugAllocationSimpleCopy(char* tag, sp<Allocation> dAllocation)
 void runNDKExample()
 {
 
+    LOGD("Running NDK example");
+
     const int inputElementsCount = 10;
 
     int inputArray[inputElementsCount];
@@ -56,7 +73,7 @@ void runNDKExample()
     for(int i = 0; i < inputElementsCount; i++) {
         inputArray[i] = i;
     }
-    
+
     LOGD("Filled sample input data");
 
     // Instantiates an Allocation and copies in it
@@ -81,36 +98,38 @@ void runNDKExample()
     sp<Allocation> outputAllocation = Allocation::createSized(mRS, Element::I32(mRS), inputElementsCount);
 
     // Init custom script
-    ScriptC_main myScript(mRS);
+    ScriptC_main* myScript = new ScriptC_main(mRS);
 
     // Execute kernel on simple allocation and debug it
-    myScript.forEach_mulKernel(inputAllocationSimple, outputAllocation);
+    myScript->forEach_mulKernel(inputAllocationSimple, outputAllocation);
     mRS->finish();
 
     debugAllocationSimpleCopy("inputAllocationSimple -> outputAllocation", outputAllocation);
 
     // Execute kernel on pointer allocation and debug it
-    myScript.forEach_mulKernel(inputAllocationSimple, outputAllocation);
+    myScript->forEach_mulKernel(inputAllocationSimple, outputAllocation);
     mRS->finish();
 
     debugAllocationSimpleCopy("inputAllocationPointer -> outputAllocation", outputAllocation);
 }
 
-// JNI section
-
 extern "C" {
 
-JNI_FUNCTION(void, initRenderScript, jstring cacheDirObj)
+JNI_FUNCTION(void, initRenderScript, jstring cacheDirObj) //, jint cacheDirStringLength)
 {
-
-    // Retrieve cache dir path from Java
-    const char* cacheDir = env->GetStringUTFChars(cacheDirObj, nullptr);
+    const char* tmpCacheDir = env->GetStringUTFChars(cacheDirObj, NULL);
+    
+    char cacheDir[255];
+    
+    int cacheDirStringLength = strlen(tmpCacheDir);
+    memcpy((void*) cacheDir, (void*)tmpCacheDir, cacheDirStringLength);
+    env->ReleaseStringUTFChars(cacheDirObj, tmpCacheDir);
+    
+    cacheDir[cacheDirStringLength] = 0;
 
     // Initialize RS context
-    initRS(cacheDir);
-
-    // Release string data
-    env->ReleaseStringUTFChars(cacheDirObj, cacheDir);
+    initRS(cacheDir); //, cacheDirStringLength);
+    //COFFEE_TRY_JNI(env, initRS(cacheDir)); //, cacheDirStringLength);
 }
 
 // Test function to invoke from Java
