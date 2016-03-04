@@ -8,10 +8,11 @@ LOCAL_LDLIBS += -llog -landroid -lc -lz -lm
 ndkLibDir := $(NDK_DIR)/platforms/android-19/arch-arm/usr/lib/rs
 ndkIncludeDir := $(NDK_DIR)/platforms/android-19/arch-arm/usr/include
 
+#LOCAL_C_FLAGS += -frtti
 LOCAL_C_INCLUDES += $(ndkIncludeDir)/rs $(ndkIncludeDir)/rs/cpp $(ndkIncludeDir)/rs/scriptc
-LOCAL_STATIC_LIBRARIES += rs/libRScpp_static.a
+#LOCAL_STATIC_LIBRARIES += rs/libRScpp_static.a
 
-# LOCAL_LDLIBS += $(ndkLibDir)/libcompiler_rt.a $(ndkLibDir)/libRScpp_static.a
+LOCAL_LDLIBS += $(ndkLibDir)/libRScpp_static.a
 
 # Should be changed to release when necessary
 GENERATED_DIR:=build/generated/source/rs/debug

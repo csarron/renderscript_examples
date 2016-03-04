@@ -7,3 +7,4 @@ build
 captures
 *.iml
 ProfilerExample/app/src/main/libs/*
+RSNDKExample/app/src/main/libs/*

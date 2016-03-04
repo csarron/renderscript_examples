@@ -14,7 +14,9 @@ sp<RS> mRS;
 void initRS(const char* cacheDir)
 {
 
+	LOGD("NDK: creating new RS context");
     mRS = new RS();
+	LOGD("NDK: initializing new RS context with cache dir: %s", cacheDir);
     mRS->init(cacheDir);
 }
 
@@ -54,6 +56,8 @@ void runNDKExample()
     for(int i = 0; i < inputElementsCount; i++) {
         inputArray[i] = i;
     }
+    
+    LOGD("Filled sample input data");
 
     // Instantiates an Allocation and copies in it
     sp<Allocation> inputAllocationSimple = Allocation::createSized(mRS, Element::I32(mRS), inputElementsCount);
