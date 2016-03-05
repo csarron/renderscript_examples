@@ -19,6 +19,33 @@ void rsErrorHandlerFunction(uint32_t errorNum, const char* errorText)
     LOGE("RS error: %s", errorText);
 }
 
+void checkMemory(){
+	// Need to check that mRS contents behaves as expected
+	
+	int idx = 0;
+	int offset = 0;
+	int sizes[255];
+	
+	idx++; sizes[idx] = sizeof(android::RSC::LightRefBase<RS>); LOGD("sz android::RSC::LightRefBase<RS> %d", sizes[idx]); offset += sizes[idx];
+	idx++; sizes[idx] = 4; LOGD("sz virtual %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(pthread_t); LOGD("sz pthread_t %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(pid_t); LOGD("sz pid_t %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(bool); LOGD("sz bool %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(RsDevice); LOGD("sz RsDevice %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(RsContext); LOGD("sz RsContext %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(RsError); LOGD("sz RsError %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(ErrorHandlerFunc_t); LOGD("sz ErrorHandlerFunc_t %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(MessageHandlerFunc_t); LOGD("sz MessageHandlerFunc_t %d", sizes[idx]);offset += sizes[idx];
+	idx++; sizes[idx] = sizeof(bool); LOGD("sz bool %d", sizes[idx]);offset += sizes[idx];
+	
+	// What is there?
+	long ptrmRS = (long) mRS.get();
+	long pointerToStringPlace = ptrmRS + offset;
+	unsigned int * ptrToPlace = (unsigned int*)pointerToStringPlace;
+	LOGD("first int for string place %lu", *ptrToPlace);
+
+}
+
 // Initialize RenderScript context
 void initRS(const char* cacheDir) //, const int cacheDirStringLength)
 {
@@ -31,6 +58,8 @@ void initRS(const char* cacheDir) //, const int cacheDirStringLength)
     mRS->setErrorHandler(&rsErrorHandlerFunction);
 
     LOGD("Initializing new RS context with cache dir: %s", cacheDir);
+
+	checkMemory();
 
     mRS->init(cacheDir); //, RS_CONTEXT_TYPE_DEBUG);
 }
