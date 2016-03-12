@@ -28,7 +28,7 @@ $(info GENERATED_DIR_RELATIVE: $(GENERATED_DIR_RELATIVE))
 LOCAL_SRC_FILES := main.cpp $(GENERATED_DIR_RELATIVE)/ScriptC_main.cpp
 
 # Add error catcher: https://github.com/xroche/coffeecatch
-LOCAL_C_FLAGS += -funwind-tables  -Wl,--no-merge-exidx-entries
+LOCAL_C_FLAGS += -funwind-tables  -Wl,--no-merge-exidx-entries 
 LOCAL_SRC_FILES += catcher/coffeecatch.c catcher/coffeejni.c
 
 include $(BUILD_SHARED_LIBRARY)

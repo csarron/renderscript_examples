@@ -19,31 +19,51 @@ void rsErrorHandlerFunction(uint32_t errorNum, const char* errorText)
     LOGE("RS error: %s", errorText);
 }
 
+int getElement(long ptr, int size){
+    
+    int dst = 0;
+    long dstPtr = (long) &dst;
+    memcpy((void*)(dstPtr), (void*)(ptr), size);
+    
+    return dst;
+    
+}
+
 void checkMemory(){
 	// Need to check that mRS contents behaves as expected
 	
 	int idx = 0;
 	int offset = 0;
 	int sizes[255];
+	long ptrRS = (long) mRS.get();
 	
-	idx++; sizes[idx] = sizeof(android::RSC::LightRefBase<RS>); LOGD("sz android::RSC::LightRefBase<RS> %d", sizes[idx]); offset += sizes[idx];
-	idx++; sizes[idx] = 4; LOGD("sz virtual %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(pthread_t); LOGD("sz pthread_t %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(pid_t); LOGD("sz pid_t %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(bool); LOGD("sz bool %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(RsDevice); LOGD("sz RsDevice %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(RsContext); LOGD("sz RsContext %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(RsError); LOGD("sz RsError %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(ErrorHandlerFunc_t); LOGD("sz ErrorHandlerFunc_t %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(MessageHandlerFunc_t); LOGD("sz MessageHandlerFunc_t %d", sizes[idx]);offset += sizes[idx];
-	idx++; sizes[idx] = sizeof(bool); LOGD("sz bool %d", sizes[idx]);offset += sizes[idx];
-	
-	// What is there?
-	long ptrmRS = (long) mRS.get();
-	long pointerToStringPlace = ptrmRS + offset;
-	unsigned int * ptrToPlace = (unsigned int*)pointerToStringPlace;
-	LOGD("first int for string place %lu", *ptrToPlace);
+	idx++; sizes[idx] = sizeof(android::RSC::LightRefBase<RS>); LOGD("sz android::RSC::LightRefBase<RS> %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx])); offset += sizes[idx]; 
+	idx++; sizes[idx] = 4; offset += sizes[idx]; LOGD("sz virtual %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(pthread_t);  LOGD("sz pthread_t %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(pid_t);LOGD("sz pid_t %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(bool);  LOGD("sz bool %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(RsDevice); LOGD("sz RsDevice %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(RsContext); LOGD("sz RsContext %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(RsError);  LOGD("sz RsError %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(ErrorHandlerFunc_t);  LOGD("sz ErrorHandlerFunc_t %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(MessageHandlerFunc_t); LOGD("sz MessageHandlerFunc_t %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(bool); LOGD("sz bool %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));offset += sizes[idx]; 
+	idx++; sizes[idx] = sizeof(std::string); LOGD("sz string %d = %lu", sizes[idx], getElement(ptrRS+offset,sizes[idx]));   
 
+
+    long ptrstr = getElement(ptrRS+offset,sizes[idx]);
+    
+    char * chars = (char*)ptrstr;
+    
+    LOGD("chars1 %c", chars[0]);
+    LOGD("chars2 %c", chars[1]);
+    LOGD("chars3 %c", chars[2]);
+    LOGD("chars4 %c", chars[3]);
+    LOGD("chars5 %c", chars[4]);
+    LOGD("chars6 %c", chars[5]);
+
+   offset += sizes[idx]; 
+    
 }
 
 // Initialize RenderScript context
@@ -59,7 +79,7 @@ void initRS(const char* cacheDir) //, const int cacheDirStringLength)
 
     LOGD("Initializing new RS context with cache dir: %s", cacheDir);
 
-	checkMemory();
+	//checkMemory();
 
     mRS->init(cacheDir); //, RS_CONTEXT_TYPE_DEBUG);
 }

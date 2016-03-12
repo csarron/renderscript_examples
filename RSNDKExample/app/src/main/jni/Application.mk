@@ -1,4 +1,6 @@
-APP_OPTIM:=release
+#APP_OPTIM:=release
+
+APP_DEBUG := 1
 
 APP_STL := gnustl_shared
 APP_CPPFLAGS :=-fexceptions -std=c++11
