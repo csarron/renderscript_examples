@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
         // Create a view to see LogCat log
-        logView = new LogView(this, new String[]{TAG,"RenderScript"}, 5);
+        logView = new LogView(this, new String[]{TAG, "RenderScript"}, 5);
         logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
@@ -109,17 +109,12 @@ public class MainActivity extends AppCompatActivity {
         // Debugs elements
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
-                debugElement(mappedItems, x, y);
+                ScriptField_GrayPointOrdered.Item item = mappedItems[x][y];
+                Log.d(TAG, String.format("(%d,%d): x=%d, y=%d, a=%d, b=%d",
+                        x, y, item.x, item.y, item.a, item.b));
             }
         }
 
-    }
-
-    private void debugElement(ScriptField_GrayPointOrdered.Item mappedItems[][],
-                              int x, int y) {
-        ScriptField_GrayPointOrdered.Item item = mappedItems[x][y];
-        Log.d(TAG, String.format("(%d,%d): x=%d, y=%d, a=%d, b=%d",
-                x, y, item.x, item.y, item.a, item.b));
     }
 
     private static Method getCopyToWithoutValidationMethod() {
@@ -139,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(logView!= null)
-        {
+        if (logView != null) {
             logView.onResume();
         }
     }
@@ -148,8 +142,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(logView!= null)
-        {
+        if (logView != null) {
             logView.onPause();
         }
     }
