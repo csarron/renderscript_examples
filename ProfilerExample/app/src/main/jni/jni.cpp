@@ -160,7 +160,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_checkOpenMP
 
     int threadsNumber = 0;
 
-#pragma omp parallel for
+#pragma omp parallel for shared(threadsNumber)
     for(int i = 0; i < 100; i++) {
         int currentNum = omp_get_num_threads();
         if(currentNum > threadsNumber)

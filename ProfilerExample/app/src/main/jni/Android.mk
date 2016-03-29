@@ -1,10 +1,10 @@
 LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := native
 LOCAL_CFLAGS += -fopenmp
-LOCAL_LDLIBS := -llog
-LOCAL_LDFLAGS += -fopenmp -ljnigraphics
+LOCAL_LDFLAGS += -ljnigraphics -llog -fopenmp
 
 LOCAL_SRC_FILES := jni.cpp
 

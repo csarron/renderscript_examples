@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 // Averaging will run every 10 cycles
-                timings.setTimingDebugInterval(50);
+                timings.setTimingDebugInterval(20);
 
                 if (PURE_PROFILING) {
                     try {

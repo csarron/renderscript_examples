@@ -42,7 +42,7 @@ android {
         minSdkVersion 18
         // Fast hack, NOT production ready, to write files on API 23 devices without asking for
         // permissions.
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionCode 4
         versionName "1.0"
 
@@ -56,8 +56,7 @@ android {
             signingConfig signingConfigs.debugg
         }
         debug {
-            renderscriptDebuggable false
-            renderscriptOptimLevel 3
+
         }
     }
     // This settings tell Android Studio not to use its default NDK buld process,
@@ -66,8 +65,6 @@ android {
         // Sets location where Android Studio will look for
         // .so library files (output of ndk-build)
         jniLibs.srcDir 'src/main/libs'
-        // Prevents Android Studio indexing C++ source code
-        jni.srcDirs = []
     }
 
     // Calls regular ndk-build(.cmd) script from app directory
@@ -99,6 +96,15 @@ android {
     // NDK build task must execute before Java compile one
     tasks.withType(JavaCompile) {
         compileTask -> compileTask.dependsOn ndkBuild
+    }
+}
+// Disables Android Studio automatic compile of NDK code
+afterEvaluate {
+    tasks.getByName("compileReleaseNdk").each { task ->
+        task.enabled = false
+    }
+    tasks.getByName("compileDebugNdk").each { task ->
+        task.enabled = false
     }
 }
 

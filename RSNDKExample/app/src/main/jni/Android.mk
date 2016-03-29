@@ -1,7 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := RSNDK # Module name, produces libRSNDK.so
+# Module name, produces libRSNDK.so
+LOCAL_MODULE := RSNDK
 LOCAL_LDLIBS += -llog -landroid -lc -lz -lm
 
 ### RS setup
