@@ -1,34 +1,40 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := RSNDK
+LOCAL_MODULE := RSNDK # Module name, produces libRSNDK.so
 LOCAL_LDLIBS += -llog -landroid -lc -lz -lm
 
-# Should be changed to release when necessary
-GENERATED_DIR:=build/generated/source/rs/debug
+### RS setup
+# Include all RS C++ headers and generated sources
+LOCAL_C_INCLUDES += $(TARGET_C_INCLUDES)/rs/cpp \
+	$(TARGET_C_INCLUDES)/rs
 
-# RS setup
-ndkLibDir := $(NDK_DIR)/platforms/$(TARGET_PLATFORM)/arch-arm/usr/lib/rs
-ndkIncludeDir := $(NDK_DIR)/platforms/$(TARGET_PLATFORM)/arch-arm/usr/include
-
-LOCAL_C_INCLUDES += $(ndkIncludeDir)/rs $(ndkIncludeDir)/rs/cpp
-LOCAL_C_INCLUDES += $(GENERATED_DIR)
-
-LOCAL_LDFLAGS := -L$(ndkLibDir)
+# Links required RS library
+LOCAL_LDFLAGS += -L$(call host-path,$(TARGET_C_INCLUDES)/../lib/rs)
 LOCAL_LDLIBS += -lRScpp_static
 
-# Relative dir, as local src are relative to Android.mk folder
-GENERATED_DIR_RELATIVE := ../../../$(GENERATED_DIR)
+# Automatically includes all .rs and .fs files that reside in the
+# app/src/main/rs folder
+# Reference: http://stackoverflow.com/a/8980441/3671330
+RS_FOLDER := $(LOCAL_PATH)/../rs
+RS_SRC_FILES := $(wildcard $(RS_FOLDER)/*.rs)
+RS_SRC_FILES += $(wildcard $(RS_FOLDER)/*.fs)
 
-$(info TARGET_PLATFORM: $(TARGET_PLATFORM))
-$(info ANDROID_NDK: $(NDK_DIR))
-$(info GENERATED_DIR: $(GENERATED_DIR))
-$(info GENERATED_DIR_RELATIVE: $(GENERATED_DIR_RELATIVE))
+# Here, __ folder is included. It contains RS generated headers.
+# It is named this way because dots were replaced by underscores.
+# ../rs/main.rs -> __/rs/ScriptC_main.h
+LOCAL_C_INCLUDES += $(TARGET_OBJS)/$(LOCAL_MODULE)/__
 
-LOCAL_SRC_FILES := main.cpp $(GENERATED_DIR_RELATIVE)/ScriptC_main.cpp
+# FYI:
+# TARGET_OBJS folder can be:
+# 	app/build/intermediates/ndk/obj/local/armeabi-v7a/objs
+# LOCAL_MODULE is: RSNDK
 
-# Add error catcher: https://github.com/xroche/coffeecatch
-LOCAL_C_FLAGS += -funwind-tables  -Wl,--no-merge-exidx-entries 
-LOCAL_SRC_FILES += catcher/coffeecatch.c catcher/coffeejni.c
+# Removes first part of path to make it acceptable
+# by LOCAL_SRC_FILES
+RS_SRC_FILES := $(RS_SRC_FILES:$(LOCAL_PATH)/%=%)
+
+# C++ sources
+LOCAL_SRC_FILES := main.cpp $(RS_SRC_FILES)
 
 include $(BUILD_SHARED_LIBRARY)

@@ -69,9 +69,6 @@ public class MainActivity extends AppCompatActivity {
         int outputArray[] = new int[inputArray.length];
         outputAllocation.copyTo(outputArray);
 
-        // Debugs the result, writing it to the TextView
-        String debugElements[] = new String[outputArray.length];
-
         String debugString = "Output: ";
         for (int i = 0; i < outputArray.length; i++)
             debugString += String.valueOf(outputArray[i]) + (i < outputArray.length - 1 ? ", " : "");

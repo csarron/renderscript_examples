@@ -31,14 +31,11 @@ android {
 
     defaultConfig {
         applicationId "net.hydex11.rsndkexample"
+        // Min API that supports RS C++ side is 19
         minSdkVersion 19
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-
-        renderscriptTargetApi 19
-        renderscriptNdkModeEnabled true
-
 
     }
     buildTypes {
@@ -49,14 +46,11 @@ android {
         debug {
         }
     }
-    // This settings tell Android Studio not to use its default NDK buld process,
-    // as it does not support custom CPP flags, nor Android.mk file.
+    // This settings tells Android Studio where to look for NDK built libraries
     sourceSets.main {
         // Sets location where Android Studio will look for
         // .so library files (output of ndk-build)
         jniLibs.srcDir 'src/main/libs'
-        // Prevents Android Studio indexing C++ source code
-        jni.srcDirs = []
     }
 
     // Calls regular ndk-build(.cmd) script from app directory
@@ -90,8 +84,11 @@ android {
 
 }
 
-// Disable issue that appears when compiling RS for NDK
+// Disables Android Studio automatic compile of NDK code
 afterEvaluate {
+    tasks.getByName("compileReleaseNdk").each { task ->
+        task.enabled = false
+    }
     tasks.getByName("compileDebugNdk").each { task ->
         task.enabled = false
     }

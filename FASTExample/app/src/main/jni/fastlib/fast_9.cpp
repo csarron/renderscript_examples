@@ -1,7 +1,6 @@
 /*This is mechanically generated code*/
 #include "fast.h"
 #include <omp.h>
-#include "harris.h"
 
 static void make_offsets(int pixel[], int row_stride) {
     pixel[0] = 0 + row_stride * 3;
@@ -2248,8 +2247,6 @@ xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num
                 continue;
             else
                 continue;
-
-            uchar harrisScore = calculateHarrisScore(p, stride);
 
             num_corners++;
 

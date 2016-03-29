@@ -45,6 +45,8 @@ import java.util.regex.Pattern;
  */
 public class LogView extends ScrollView {
     private static final String TAG = "LogView";
+    private final int logCheckIntervalSeconds;
+    private final int mPID;
 
     TextView logTextView;
     String[] logFilters;
@@ -56,15 +58,18 @@ public class LogView extends ScrollView {
 
     public LogView(Context context) {
         // No filtering
-        this(context, (String[]) null);
+        this(context, (String[]) null, 5);
     }
 
-    public LogView(Context context, String filter) {
-        this(context, new String[]{filter});
+    public LogView(Context context, String filter, int logCheckIntervalSeconds) {
+        this(context, new String[]{filter}, logCheckIntervalSeconds);
     }
 
-    public LogView(Context context, String[] filters) {
+    public LogView(Context context, String[] filters, int logCheckIntervalSeconds) {
         super(context);
+
+        this.mPID = android.os.Process.myPid();
+        this.logCheckIntervalSeconds = logCheckIntervalSeconds;
 
         Log.d(TAG, "Instantiated new LogView");
 
@@ -94,7 +99,7 @@ public class LogView extends ScrollView {
         setPadding(5, 5, 5, 5);
 
         logTextView.setTextColor(Color.GREEN);
-        logTextView.setTextSize(12);
+        logTextView.setTextSize(10);
         logTextView.setTypeface(Typeface.MONOSPACE);
 
         // Fill container (scrolling one)
@@ -114,7 +119,7 @@ public class LogView extends ScrollView {
                 while (canRun) {
                     try {
                         checkForLogs();
-                        Thread.sleep(2500, 0);
+                        Thread.sleep(logCheckIntervalSeconds * 1000, 0);
                     } catch (InterruptedException e) {
                         Log.d(TAG, "Closing LogCat check thread");
                         canRun = false;
@@ -123,6 +128,18 @@ public class LogView extends ScrollView {
             }
         });
         loggingThread.start();
+    }
+
+    public void onResume() {
+        // Resets log checking
+        if (loggingThread == null || !loggingThread.isAlive()) {
+            initLoggingThread();
+        }
+    }
+
+    public void onPause() {
+        // Disables log checking
+        destroy();
     }
 
     private void checkForLogs() {
@@ -138,8 +155,8 @@ public class LogView extends ScrollView {
             // -d flag closes process after flush.
 
             String cmd = (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) ?
-                    "logcat -d -v time " + appId + ":v dalvikvm:v System.err:v *:s" :
-                    "logcat -d -v time";
+                    "logcat -d " + appId + ":v dalvikvm:v System.err:v *:s" :
+                    "logcat -d";
 
             // Reads output, line per line
             Process logCatProcess = Runtime.getRuntime().exec(cmd);
@@ -157,7 +174,7 @@ public class LogView extends ScrollView {
         }
     }
 
-    final String logBeginRegex = "^(.*)([DIEWVA]/\\w+\\s*(?:\\(\\s*\\d+\\s*\\))?:\\s*.*)$";
+    final String logBeginRegex = "^([DIEWVA]/\\w+)\\s*\\(\\s*(\\d+)\\s*\\):\\s*(.*)$";
     Pattern logBeginPattern = Pattern.compile(logBeginRegex);
 
     private void evaluateLogLine(String logLine) {
@@ -172,8 +189,8 @@ public class LogView extends ScrollView {
         }
         alreadyParsed.add(logLine);
 
-        // 01-17 11:55:49.754 W/art     (11096): Suspending all threads took: 5.780ms
-        // 01-17 11:59:12.144 I/Timeline(11096): Timeline: Activity_idle id: android.os.BinderProxy@273fb0d2 time:364339488
+        // W/art     (11096): Suspending all threads took: 5.780ms
+        // I/Timeline(11096): Timeline: Activity_idle id: android.os.BinderProxy@273fb0d2 time:364339488
         Matcher logBeginMatcher = logBeginPattern.matcher(logLine);
 
         boolean validMatch = logBeginMatcher.matches();
@@ -182,8 +199,15 @@ public class LogView extends ScrollView {
             return;
         }
 
+        // Check if message belongs to current process (and not previous)
+        int PID = Integer.parseInt(logBeginMatcher.group(2));
+        if (PID != mPID) {
+            return;
+        }
+
         // Get actual message
-        logLine = logBeginMatcher.group(logBeginMatcher.groupCount());
+        String logTag = logBeginMatcher.group(1);
+        logLine = logTag + ": " + logBeginMatcher.group(3);
 
         if (logFilters == null) {
             threadedAddLogLine(logLine);

@@ -5,8 +5,6 @@
 // The java_package_name directive needs to use your Activity's package path
 #pragma rs java_package_name(net.hydex11.fastexample)
 
-#include "harris.rsh"
-
 // FAST threshold
 const uchar fastThreshold = 20;
 
@@ -108,9 +106,6 @@ uchar __attribute__((kernel)) fastNoOptimized(uchar in, uint32_t x, uint32_t y)
         if(count == fastContiguousPointsCount) {
             // Found a keypoint!
             return 1;
-
-            // Here harris score is not used as this is just an example to explain how FAST
-            // extraction works.
         }
 
     }

@@ -4,15 +4,15 @@
 // The java_package_name directive needs to use your Activity's package path
 #pragma rs java_package_name(net.hydex11.fastexample)
 
-int fastThreshold = 20;
 rs_allocation grayAllocation;
 
-#include "harrisFS.rsh"
 #include "fast_util.rsh"
 
 // The following code is a direct porting of the original FAST library
 // (http://www.edwardrosten.com/work/fast.html), which is highly optimized, auto
 // generated code.
+
+const int fastThreshold = 20;
 uchar __attribute__((kernel)) fastOptimized(uchar in, uint x, uint y)
 {
 
@@ -2230,5 +2230,6 @@ if (getFASTPixel(0,x,y) > cb) if (getFASTPixel(1,x,y) > cb) if (getFASTPixel(2,x
             else
                 return 0;
 
-    return calculateHarrisScore(x,y);
+    // Point is a FAST keypoint
+    return 1;
 }

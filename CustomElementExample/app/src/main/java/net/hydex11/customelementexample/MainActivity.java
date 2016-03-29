@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         exampleRan=true;
 
         // Add custom automated filter logging view
-        logView = new LogView(this, new String[]{"RenderScript"});
+        logView = new LogView(this, new String[]{"RenderScript"}, 5);
         logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.myLayout);
@@ -72,10 +72,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        if(logView != null)
-            logView.destroy();
+    protected void onResume() {
+        super.onResume();
+        if(logView!= null)
+        {
+            logView.onResume();
+        }
+    }
 
-        super.onDestroy();
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(logView!= null)
+        {
+            logView.onPause();
+        }
     }
 }

@@ -40,9 +40,10 @@ public class MainActivity extends AppCompatActivity {
         example();
     }
 
+    LogView logView;
     void example() {
 
-        LogView logView = new LogView(this, "RenderScript");
+        logView = new LogView(this, "RenderScript", 5);
         logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.myLayout);
@@ -80,5 +81,23 @@ public class MainActivity extends AppCompatActivity {
         main.forEach_initializeMyElements(mIndexesAllocation);
 
         main.forEach_debugAllocation(mIndexesAllocation);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(logView!= null)
+        {
+            logView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(logView!= null)
+        {
+            logView.onPause();
+        }
     }
 }

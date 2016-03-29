@@ -10,25 +10,37 @@
 // Handle to libRS.so library
 void *libRShandle;
 
-// Declaration of RS forEach function pointer. Required args can be deduced by its usage inside
-// Script.cpp file:
+// Declaration of RS forEach function pointer. Required args can be seen in its definition inside
+// rsScript.cpp file:
 //
-// - rsScriptForEach(mRS->getContext(), getID(), slot, in_id, out_id, usr, usrLen, NULL, 0);
+// void rsi_ScriptForEach(Context *rsc, RsScript vs, uint32_t slot,
+//                       RsAllocation vain, RsAllocation vaout,
+//                       const void *params, size_t paramLen,
+//                       const RsScriptCall *sc, size_t scLen)
 //
-// * Context, IDs are pointers ("in_id" is input Allocation pointer).
-// * slot is an integer, as is a kernel index in a script.
-// * usr is custom user data struct pointer.
-// * usrLen is usr struct size
-// * NULL is occuping the place of LaunchOptions pointer, that would restrain the kernel
+// Reference:
+// https://android.googlesource.com/platform/frameworks/rs/+/marshmallow-mr1-release/rsScript.cpp#210
+//
+// Types reference:
+// https://android.googlesource.com/platform/frameworks/rs/+/marshmallow-mr1-release/rsDefines.h#43
+//
+// * rsc is the pointer to a RS context
+// * vs is the pointer to a RS script
+// * slot is the integer representing the kernel index that has to be called.
+// * vain and vaout are pointers to input and output allocations
+// * params is custom user data struct pointer.
+// * paramLen is user data struct size.
+// * sc is a LaunchOptions pointer, which restrains the kernel
 //		usage, for example limiting initial X or Y.
-// * 0 is the actual size of the LaunchOptions struct.
+// * scLen is the actual size of the LaunchOptions struct.
 int (*rsScriptForEach)(void *, void *, int, void *, void *, void *, int, void *, int);
 
 // Declaration of RS finish function pointer. Its only argument is RS context pointer.
 int (*rsContextFinish)(void *);
 
 // Function to set a script's integer value.
-// Actual declaration: https://android.googlesource.com/platform/frameworks/rs/+/jb-mr2-release/rsScript.cpp#211
+// Actual declaration:
+// https://android.googlesource.com/platform/frameworks/rs/+/marshmallow-mr1-release/rsScript.cpp#243
 // void rsi_ScriptSetVarI(Context *rsc, RsScript vs, uint32_t slot, int value)
 int (*rsScriptSetVarI)(void *, void *, int, int);
 

@@ -7,7 +7,6 @@
 int fastThreshold = 20;
 rs_allocation grayAllocation;
 
-#include "harrisFS.rsh"
 #include "fast_opencv_util.rsh"
 
 // Follows FAST features detection directly ported from OpenCV code
@@ -15,11 +14,7 @@ rs_allocation grayAllocation;
 
 uchar __attribute__((kernel)) fastOpenCV(uchar in, uint x, uint y){
     int v;
-    uint4 C;
-    C.x = 0;
-    C.y = 0;
-    C.z = 0;
-    C.w = 0;
+    uint4 C = {0,0,0,0};
 
     C.z |= (uint)(rsGetElementAt_uchar(grayAllocation, x - 1, y - 3)) << 8;
     C.z |= (uint)(rsGetElementAt_uchar(grayAllocation, x, y - 3));
@@ -56,10 +51,8 @@ uchar __attribute__((kernel)) fastOpenCV(uchar in, uint x, uint y){
 
     if (isKeyPoint(mask)) {
 
-        // Here we calculate the harris score
-        uchar score = calculateHarrisScore(x,y);
-
-        return score;
+        // Point is a FAST keypoint
+        return 1;
 
     }
 

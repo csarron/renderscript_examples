@@ -41,6 +41,8 @@ public class RSCompute {
 
     // Boolean to use a custom YUV to RGB kernel, instead of the custom intrinsic script
     boolean useCustomYUVToRGBConversion = false;
+    // Boolean to use the simple YUV type declaration.
+    boolean useYUVType = true;
 
     // Allocations
     Allocation inputAllocation; // Camera preview YUV allocation
@@ -88,14 +90,25 @@ public class RSCompute {
 
         // Init Allocations
 
-        // Calculates expected YUV bytes count as YUV is not a human friendly way of storing data:
-        // https://en.wikipedia.org/wiki/YUV#Y.27UV420p_.28and_Y.27V12_or_YV12.29_to_RGB888_conversion
-        int expectedBytes = inputImageSize.x * inputImageSize.y *
-                ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
+        if(useYUVType){
+            // When used together with
+            Type.Builder yuvTypeBuilder = new Type.Builder(mRS, Element.createPixel(mRS, Element.DataType.UNSIGNED_8, Element.DataKind.PIXEL_YUV));
+            yuvTypeBuilder.setX(inputImageSize.x);
+            yuvTypeBuilder.setY(inputImageSize.y);
+            yuvTypeBuilder.setYuvFormat(android.graphics.ImageFormat.NV21);
+            Type yuvType = yuvTypeBuilder.create();
+            inputAllocation = Allocation.createTyped(mRS, yuvType, Allocation.USAGE_SCRIPT);
+        }
+        else {
+            // Calculates expected YUV bytes count as YUV is not a human friendly way of storing data:
+            // https://en.wikipedia.org/wiki/YUV#Y.27UV420p_.28and_Y.27V12_or_YV12.29_to_RGB888_conversion
+            int expectedBytes = inputImageSize.x * inputImageSize.y *
+                    ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8;
 
-        Type.Builder yuvTypeBuilder = new Type.Builder(mRS, Element.U8(mRS)).setX(expectedBytes);
-        Type yuvType = yuvTypeBuilder.create();
-        inputAllocation = Allocation.createTyped(mRS, yuvType, Allocation.USAGE_SCRIPT);
+            Type.Builder yuvTypeBuilder = new Type.Builder(mRS, Element.U8(mRS)).setX(expectedBytes);
+            Type yuvType = yuvTypeBuilder.create();
+            inputAllocation = Allocation.createTyped(mRS, yuvType, Allocation.USAGE_SCRIPT);
+        }
 
         // Creates temporary allocation that will match camera preview size
         Type.Builder rgbaType = new Type.Builder(mRS, Element.RGBA_8888(mRS)).setX(mInputImageSize.x).setY(mInputImageSize.y);

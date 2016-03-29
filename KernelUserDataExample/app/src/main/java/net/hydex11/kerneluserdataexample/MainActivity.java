@@ -47,9 +47,10 @@ public class MainActivity extends AppCompatActivity {
         example();
     }
 
+    LogView logView;
     private void example() {
         // Add custom automated filter logging view
-        LogView logView = new LogView(this, TAG);
+        logView = new LogView(this, TAG, 5);
         logView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout);
@@ -140,5 +141,23 @@ public class MainActivity extends AppCompatActivity {
             out+= element + ", ";
 
         return out;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(logView!= null)
+        {
+            logView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(logView!= null)
+        {
+            logView.onPause();
+        }
     }
 }

@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Instantiates our profiler
     Timings timings;
+    LogView logView;
 
     private void example() {
 
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout linearLayout = (LinearLayout) findViewById(R.id.linearLayout);
 
         // Create a view to see LogCat log
-        LogView logView = new LogView(this, Timings.TAG, PURE_PROFILING ? 20 : 5);
+        logView = new LogView(this, Timings.TAG, PURE_PROFILING ? 20 : 5);
         logView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         logView.addLogLine("Wait for logs. It is going to take some seconds...\n");
@@ -407,6 +408,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         exampleThread.start();
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(logView!= null)
+        {
+            logView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(logView!= null)
+        {
+            logView.onPause();
+        }
     }
 
     // Native functions
