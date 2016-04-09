@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         ScriptC_sum myScript = new ScriptC_sum(mRS);
 
         // Run the sum process, taking elements that are inside inputAllocation and
-        // placing the process' result inside the outputAllocation
+        // placing the process results inside the outputAllocation
         myScript.forEach_sum2(inputAllocation, outputAllocation);
 
         // Copies the result of the process from the outputAllocation to
