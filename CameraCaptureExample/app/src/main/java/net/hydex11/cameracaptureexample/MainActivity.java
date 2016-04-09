@@ -75,9 +75,6 @@ public class MainActivity extends Activity {
     RenderScript mRS;
     RSCompute rsCompute;
 
-    // Custom class RSRenderHolder helps us define an output surface for our RenderScript computations.
-    RSRenderHolder rsRenderHolder;
-
     private void example() {
         // Prevent window dimming
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -93,7 +90,6 @@ public class MainActivity extends Activity {
 
         // Creates a new RenderScript context and enables our custom render holder
         mRS = RenderScript.create(this);
-        rsRenderHolder = new RSRenderHolder(mRS);
 
         // Enables surface callback to init the entire process.
         // When surface gets initialized, camera preview is enabled
@@ -180,12 +176,12 @@ public class MainActivity extends Activity {
             // Scales down preview size by 2 times, for performance reasons.
             Point renderOutSize = new Point(Math.round(renderInSize.x * 0.5f), Math.round(renderInSize.y * 0.5f));
 
-            // Tells our RenderScript output surface holder which surface will be his
-            rsRenderHolder.setRenderTextureView(textureView, renderOutSize);
-
             // Instantiates a new custom compute class, passing information about input image size (camera preview)
             // and output size (render holder surface scaled size)
             rsCompute = new RSCompute(mRS, renderInSize, renderOutSize);
+
+            // Sets TextureView to display output
+            rsCompute.setRenderTextureView(textureView);
         }
     };
 
@@ -195,11 +191,10 @@ public class MainActivity extends Activity {
 
             // On every camera frame, checks if current RenderScript output surface is valid,
             // instantiated and checks that current RenderScript custom class is instantiated too
-            if (rsRenderHolder.isValidHolder() && rsCompute != null) {
+            if (rsCompute != null && rsCompute.isValidHolder()) {
 
                 // Execute computation
-                Allocation outputAllocation = rsRenderHolder.getRSRenderHolderAllocation();
-                rsCompute.compute(data, outputAllocation);
+                rsCompute.compute(data);
             }
 
             // Adds camera buffer back so that can be used on next acquired frame

@@ -23,14 +23,19 @@
  */
 
 package net.hydex11.cameracaptureexample;
+import android.graphics.SurfaceTexture;
 import android.renderscript.*;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
+import android.util.Log;
+import android.view.Surface;
+import android.view.TextureView;
 
 /**
  * Created by Alberto on 28/12/2015.
  */
 public class RSCompute {
+    private static final String TAG = "RSCompute";
 
     RenderScript mRS;
 
@@ -44,8 +49,12 @@ public class RSCompute {
     // Boolean to use the simple YUV type declaration.
     boolean useYUVType = true;
 
+    // Surface that gets generated from TextureView
+    Surface mSurface = null;
+
     // Allocations
     Allocation inputAllocation; // Camera preview YUV allocation
+    Allocation outputAllocation; // Output allocation
 
     // Temporary intermediate allocation, used to store YUV to RGBA conversion output and
     // used as our custom script input
@@ -54,7 +63,7 @@ public class RSCompute {
     Point mInputImageSize, mOutputAllocationSize;
 
     // Funcs
-    public void compute(byte[] dataIn, Allocation allocationOut) {
+    public void compute(byte[] dataIn) {
 
         // Copies data from camera preview buffer
         inputAllocation.copyFrom(dataIn);
@@ -66,13 +75,13 @@ public class RSCompute {
             sYUV.forEach(midAllocation);
 
         // Executes our custom script calculations
-        scriptCMain.forEach_root(allocationOut);
+        scriptCMain.forEach_root(outputAllocation);
 
         // Waits for all kernels to end
         mRS.finish();
 
         // Sends custom script output to rendering surface
-        allocationOut.ioSend();
+        outputAllocation.ioSend();
     }
 
     public RSCompute(RenderScript rsContext, Point inputImageSize, Point outputAllocationSize) {
@@ -127,10 +136,92 @@ public class RSCompute {
         // Tells the script the resize ratio from input to output
         scriptCMain.set_scaleInv(1.0f / ((float) mOutputAllocationSize.x / (float) mInputImageSize.x));
 
-        // Sets brightness threshold (0-255), so that gray values higher than it will be turned to red.
+        // Sets brightness threshold (0-255), so that gray values brighter than it will be turned to red.
         scriptCMain.set_threshold(180);
 
     }
 
+    // Sets output TextureView, to be used as RenderScript rendering surface.
+    // Requires also output allocation size, that will use previous TextureView as output surface.
+    public void setRenderTextureView(TextureView textureView) {
+        // If a previous surface was already defined, destroy it and
+        // its associated RS allocation
+        if (isValidHolder()) {
+            destroyHolder();
+        }
 
+        textureView.setSurfaceTextureListener(mSurfaceTextureListener);
+    }
+
+    // Main functions
+    public boolean isValidHolder() {
+        // Checks if current situation is good for using the output surface:
+        // Surface must be instantiates as well as output Allocation
+        return mSurface != null && outputAllocation != null;
+    }
+
+    // Resets output allocation, as rendering surface has changed
+    private void resetAllocation(Surface surface) {
+        Log.d(TAG, "resetAllocation called");
+
+        synchronized (this) {
+            // Destroys current out Allocation data if exists
+            destroyAllocation();
+
+            mSurface = surface;
+
+            // Instantiates new output Allocation, whose size was determined before
+            Type.Builder tb = new Type.Builder(mRS, Element.RGBA_8888(mRS));
+            tb.setX(mOutputAllocationSize.x);
+            tb.setY(mOutputAllocationSize.y);
+
+            outputAllocation = Allocation.createTyped(mRS, tb.create(), Allocation.USAGE_SCRIPT | Allocation.USAGE_IO_OUTPUT);
+
+            // Sets output surface for Allocation
+            outputAllocation.setSurface(surface);
+        }
+    }
+
+    // Util
+    private void destroyHolder() {
+        destroyAllocation();
+        mSurface = null;
+    }
+
+    private void destroyAllocation() {
+        // Destroys Allocation if was defined before
+        if (outputAllocation != null) {
+            synchronized (this) {
+                // Waits for previous RenderScript kernels to finish, as otherwise could trigger
+                // memory errors.
+                mRS.finish();
+                outputAllocation.destroy();
+                outputAllocation = null;
+            }
+        }
+    }
+
+    // Callback that listens to TextureView status, to determine if it becames a valid surface
+    private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            resetAllocation(new Surface(surface));
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+            resetAllocation(new Surface(surface));
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            destroyHolder();
+            return false;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
+        }
+    };
 }
