@@ -62,4 +62,11 @@
         android:id="@+id/textViewNativeForEach"
         android:layout_below="@+id/textViewNDK"
         android:layout_alignParentStart="true" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Trigger"
+        android:id="@+id/triggerBtn"
+        android:layout_below="@+id/textViewNativeForEach"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>

@@ -28,7 +28,7 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "net.hydex11.fastexample"

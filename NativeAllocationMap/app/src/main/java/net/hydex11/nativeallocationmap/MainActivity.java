@@ -24,9 +24,12 @@
 
 package net.hydex11.nativeallocationmap;
 
+import android.os.Build;
 import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import java.lang.reflect.Field;
 
@@ -41,7 +44,14 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native");
 
         // Starts our example
-        executeKernel();
+        Button triggerBtn = (Button)findViewById(R.id.triggerBtn);
+        triggerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                executeKernel();
+
+            }
+        });
     }
 
     // Function used to retrieve the allocation pointer. We need to inspect
@@ -84,13 +94,13 @@ public class MainActivity extends AppCompatActivity {
         ScriptC_sum sum = new ScriptC_sum(mRS);
 
         // Creates some values to use as source and prints them
-        byte sourceArray[] = {10, 30, 45};
+        byte sourceArray[] = {15, 30, 45};
         // Prints values, expected 10, 30, 45
         printOutValues(textView2, sourceArray, true);
 
         // Defines input and output allocations
-        Allocation inAllocation = Allocation.createSized(mRS, Element.U8(mRS), 3);
-        Allocation outAllocation = Allocation.createSized(mRS, Element.U8(mRS), 3);
+        Allocation inAllocation = Allocation.createSized(mRS, Element.U8(mRS), sourceArray.length);
+        Allocation outAllocation = Allocation.createSized(mRS, Element.U8(mRS), sourceArray.length);
 
         // Copies predefined values to the input allocation
         inAllocation.copyFrom(sourceArray);
@@ -102,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         // kernels are not synchronous to Java but only to RS context.
         mRS.finish();
 
-        byte outArray[] = new byte[3];
+        byte outArray[] = new byte[sourceArray.length];
 
         // Copies output to local variable (for demonstration purposes)
         outAllocation.copyTo(outArray);
@@ -111,9 +121,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Retrieves output allocation address
         long allocationPtr = getAllocationPointer(outAllocation);
+        long ContextID = getContextPointer(mRS);
 
         // Retrieves result using native way
-        int nativeResult = executeNativeExtraction(allocationPtr);
+        int nativeResult = executeNativeExtraction(ContextID, allocationPtr);
 
         // Unpacks native result and displays it
         byte nativeOutArray[] = new byte[3];
@@ -128,12 +139,20 @@ public class MainActivity extends AppCompatActivity {
         // Retrieves all addresses of required elements
         long AllocationInID = getAllocationPointer(inAllocation);
         long AllocationOutID = getAllocationPointer(outAllocation);
-        long ContextID = getContextPointer(mRS);
         long ScriptID = getScriptPointer(sum);
+
+        // Android API version lower than 19 does not support native kernel
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT){
+            textViewNativeForEach.setText("Native kernel call not supported");
+            return;
+        }
 
         // Calls the forEach from native NDK side. Called kernel is sum2,
         // which will sum 5 to every element of the input allocation and store the result in the output one
-        executeNativeKernel(ContextID, ScriptID, AllocationInID, AllocationOutID);
+        if(!executeNativeKernel(ContextID, ScriptID, AllocationInID, AllocationOutID))
+            // If the runtime library doesn't support something,
+            // return and do not execute this section
+            return;
 
         // Debug output
         outAllocation.copyTo(outArray);
@@ -142,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    native int executeNativeExtraction(long allocationPtr);
-    native int executeNativeKernel(long ContextID, long ScriptID, long AllocationInID, long AllocationOutID);
+    native int executeNativeExtraction(long ContextID, long AllocationID);
+    native boolean executeNativeKernel(long ContextID, long ScriptID, long AllocationInID, long AllocationOutID);
 
     long getContextPointer(RenderScript rsContext) {
         Field contextIDField = null;
