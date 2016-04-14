@@ -26,11 +26,9 @@ package net.hydex11.imageresizeexample;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Display;
 import android.widget.ImageView;
 
 import net.hydex11.surfacerenderexample.ScriptC_main;

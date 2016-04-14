@@ -25,7 +25,7 @@
 apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "net.hydex11.nativeallocationmap"
@@ -36,21 +36,21 @@ android {
         renderscriptTargetApi 18
 
         ndk {
-            moduleName = "native"
+            moduleName "native"
+            jobs 4
+            ldLibs "log"
+            cFlags "-fexceptions"
         }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            ndk {
-                debuggable = true
-            }
 
         }
         debug {
-            debuggable = true
-            jniDebuggable = true
+            debuggable true
+            jniDebuggable true
         }
 
     }

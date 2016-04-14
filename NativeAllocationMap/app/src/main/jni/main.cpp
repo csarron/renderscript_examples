@@ -1,27 +1,26 @@
+#include "idefix.h"
 #include <jni.h>
 #include <string.h>
+#include <android/log.h>
 
 #include "allocation.h"
 
 extern "C" {
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jint
+JNICALL
 Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeExtraction(JNIEnv *env, jobject,
+                                                                          jlong ContextID,
                                                                           jlong AllocationID) {
-    // Casts pointer address void *
-    void *pointerAddress = (void *) AllocationID;
 
-    // Maps memory to stub allocation struct
-    Allocation_t *mAllocation = (Allocation *) pointerAddress;
-
-    // Retrieves memory pointer
-    void *memoryPointer = mAllocation->mHal.drvState.lod[0].mallocPtr;
+    // Gets allocation mallocPtr
+    void *mallocPtr = getAllocationPointer(env, (void*) ContextID, (void*) AllocationID);
 
     // Reads values and packs them into an integer (just to transfer them back to Java with ease)
     unsigned char values[3];
 
     // Copies values using memcpy(dest, src, byteSize)
-    memcpy(&values, memoryPointer, 3);
+    memcpy(&values, mallocPtr, 3);
 
     // Packs the result (from 3 bytes into an integer) to easily return it
     int output = 0;
@@ -32,20 +31,26 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeExtraction(JNIEnv
     return output;
 }
 
-// Section to test the call to a kernel from NDK side
-
 // Includes our custom loading function
-#include "script.h"
+#include "libRSLoader.h"
 
-JNIEXPORT void JNICALL
+// Section to test the call to a kernel from NDK side
+#define  LOG_TAG    "NativeKernel"
+#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+
+JNIEXPORT bool JNICALL
 Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *env, jobject,
                                                                       jlong ContextID,
                                                                       jlong ScriptID,
                                                                       jlong AllocationInID,
                                                                       jlong AllocationOutID) {
 
+    LOGI("loadLibRSForNativeKernel()");
     // Loads libRS.so library and finds rsScriptForEach function address
-    loadLibRS();
+    if (!loadLibRSForNativeKernel())
+        // If the load is not successful, do not execute
+        return false;
 
     // Invoke forEach for our kernel "sum2", that has slot 2 (as it is the second, non "root" named, declared function).
     int kernelSlot = 2;
@@ -70,13 +75,21 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
     //
     //      private final static int mExportVarIdx_ndkSumAmount = 0;
 
+    LOGI("rsScriptSetVarI()");
     rsScriptSetVarI((void *) ContextID, (void *) ScriptID, variableSlot, newValue);
 
+    LOGI("rsScriptForEach()");
     rsScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
                     (void *) AllocationOutID, 0, 0, 0, 0);
 
     // Wait for the kernel to end its operations
+    LOGI("rsContextFinish()");
     rsContextFinish((void *) ContextID);
+
+    return true;
 }
 
 }
+
+#undef LOG_TAG
+#undef LOGE
