@@ -4,6 +4,7 @@
 #include <android/log.h>
 
 #include "allocation.h"
+#include "libRSLoader.h"
 
 extern "C" {
 
@@ -46,10 +47,10 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
                                                                       jlong AllocationInID,
                                                                       jlong AllocationOutID) {
 
+    RSFnPointers * fnPointers;
+
     LOGI("loadLibRSForNativeKernel()");
-    // Loads libRS.so library and finds rsScriptForEach function address
-    if (!loadLibRSForNativeKernel())
-        // If the load is not successful, do not execute
+    if((fnPointers = loadLibRSForNativeKernel()) == NULL)
         return false;
 
     // Invoke forEach for our kernel "sum2", that has slot 2 (as it is the second, non "root" named, declared function).
@@ -76,15 +77,15 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
     //      private final static int mExportVarIdx_ndkSumAmount = 0;
 
     LOGI("rsScriptSetVarI()");
-    rsScriptSetVarI((void *) ContextID, (void *) ScriptID, variableSlot, newValue);
+    fnPointers->ScriptSetVarI((void *) ContextID, (void *) ScriptID, variableSlot, newValue);
 
     LOGI("rsScriptForEach()");
-    rsScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
+    fnPointers->ScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
                     (void *) AllocationOutID, 0, 0, 0, 0);
 
     // Wait for the kernel to end its operations
     LOGI("rsContextFinish()");
-    rsContextFinish((void *) ContextID);
+    fnPointers->ContextFinish((void *) ContextID);
 
     return true;
 }
