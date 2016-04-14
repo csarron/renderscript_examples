@@ -1,9 +1,11 @@
 #include "apiLevel.h"
 #include "libRSLoader.h"
 
+
 inline void * getAllocationPointer(JNIEnv *env, void *contextPtr, void *allocationPtr) {
 
     void * mallocPtr;
+    RSFnPointers * fnPointers;
 
     switch (getAPILevel(env)) {
 
@@ -17,11 +19,13 @@ inline void * getAllocationPointer(JNIEnv *env, void *contextPtr, void *allocati
         case 22:
         case 23:
         case 24:
-            if(!loadLibRSForAllocationGetPointer())
+            if((fnPointers = loadLibRSForAllocationGetPointer()) == NULL)
                 throw("rsAllocationGetPointer loading failed");
 
-            mallocPtr = rsAllocationGetPointer(contextPtr,allocationPtr,0,0,0,0,0,0);
+            mallocPtr = fnPointers->AllocationGetPointer(contextPtr,allocationPtr,
+                                                         0,0,0,0,0,sizeof(size_t));
 
+            break;
         default:
             throw ("API level not supported");
     }
