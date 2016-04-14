@@ -141,7 +141,8 @@ public class MainActivity extends AppCompatActivity {
         long AllocationOutID = getAllocationPointer(outAllocation);
         long ScriptID = getScriptPointer(sum);
 
-        // Android API version lower than 19 does not support native kernel
+        // Android API version lower than 19 have a different
+        // symbol mapping inside the libRS.so library
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT){
             textViewNativeForEach.setText("Native kernel call not supported");
             return;
