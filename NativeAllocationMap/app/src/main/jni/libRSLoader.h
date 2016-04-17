@@ -7,8 +7,8 @@
 
 #include "stddef.h"
 
-// Declaration of RS forEach function pointer. Required args can be seen in its definition inside
-// rsScript.cpp file:
+// Declaration of RS forEach function pointer. Required args can be seen
+// in its definition inside rsScript.cpp file:
 //
 // void rsi_ScriptForEach(Context *rsc, RsScript vs, uint32_t slot,
 //                       RsAllocation vain, RsAllocation vaout,

@@ -44,14 +44,7 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native");
 
         // Starts our example
-        Button triggerBtn = (Button)findViewById(R.id.triggerBtn);
-        triggerBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                executeKernel();
-
-            }
-        });
+        executeKernel();
     }
 
     // Function used to retrieve the allocation pointer. We need to inspect

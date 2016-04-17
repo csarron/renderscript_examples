@@ -47,13 +47,15 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
                                                                       jlong AllocationInID,
                                                                       jlong AllocationOutID) {
 
+    // Struct that contains references to RS lib functions
     RSFnPointers * fnPointers;
 
     LOGI("loadLibRSForNativeKernel()");
     if((fnPointers = loadLibRSForNativeKernel()) == NULL)
         return false;
 
-    // Invoke forEach for our kernel "sum2", that has slot 2 (as it is the second, non "root" named, declared function).
+    // Invoke forEach for our kernel "sum2", that has slot 2,
+    // because it is the second, non "root" named, declared function.
     int kernelSlot = 2;
 
     // We want to modify the ndkSumAmount variable content. It occupies slot 0, as it is the first
@@ -80,8 +82,8 @@ Java_net_hydex11_nativeallocationmap_MainActivity_executeNativeKernel(JNIEnv *en
     fnPointers->ScriptSetVarI((void *) ContextID, (void *) ScriptID, variableSlot, newValue);
 
     LOGI("rsScriptForEach()");
-    fnPointers->ScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot, (void *) AllocationInID,
-                    (void *) AllocationOutID, 0, 0, 0, 0);
+    fnPointers->ScriptForEach((void *) ContextID, (void *) ScriptID, kernelSlot,
+                              (void *) AllocationInID, (void *) AllocationOutID, 0, 0, 0, 0);
 
     // Wait for the kernel to end its operations
     LOGI("rsContextFinish()");
