@@ -30,6 +30,7 @@ import android.renderscript.*;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     RenderScriptHolder renderScriptHolder;
 
     private void example() {
+
+        // Set download folder
+        Common.setExternalDirPath(this);
 
         // Initialize views, loads input image
         initViews();
@@ -86,8 +90,8 @@ public class MainActivity extends AppCompatActivity {
                 // Loads a property, in our case "kernelSlot". It not present, crash!
                 int kernelSlot;
                 try {
-                     kernelSlot = Integer.parseInt(properties.getProperty("kernelSlot"));
-                }catch (NumberFormatException e){
+                    kernelSlot = Integer.parseInt(properties.getProperty("kernelSlot"));
+                } catch (NumberFormatException e) {
                     throw new RuntimeException(e);
                 }
 

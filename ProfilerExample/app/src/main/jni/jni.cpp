@@ -78,7 +78,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkSetBlurD
 JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkBlur(JNIEnv* env, jobject)
 {
 // Here totalGrayPixels is used because it represents each pixel package
-    #pragma omp parallel for shared(blurRadius, blurPadding, blurTotalCount)
+    #pragma omp parallel for default(shared)
     for(int i = blurPadding; i < totalGrayPixels - blurPadding - 1; i++) {
 
         int sum[] = { 0, 0, 0};
@@ -103,7 +103,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkBlur(JNI
 JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_ndkSetValues(JNIEnv* env, jobject)
 {
 // Here totalGrayPixels is used because it represents each pixel package
-    #pragma omp parallel for shared(blurRadius, blurPadding, blurTotalCount)
+    #pragma omp parallel for default(shared)
     for(int i = blurPadding; i < totalGrayPixels - blurPadding - 1; i++) {
 
         int currentRGBAIndex = i * 4;
@@ -133,7 +133,7 @@ const float grayMultipliers[] = { 0.299f, 0.587f, 0.114f };
 JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_rgbaToGray(JNIEnv* env, jobject)
 {
 
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
     for(int i = 0; i < totalGrayPixels; i++) {
         int currentRGBAIndex = i * 4;
         grayImagePointer[i] = (byte)((float)rgbaImagePointer[currentRGBAIndex] * grayMultipliers[0] +
@@ -148,7 +148,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_calculatePI
                                                                                  jint parallelExecutions,
                                                                                  jint piIterations)
 {
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
     for(int i = 0; i < parallelExecutions; i++) {
         piTest(piIterations);
     }
@@ -160,7 +160,7 @@ JNIEXPORT void JNICALL Java_net_hydex11_profilerexample_MainActivity_checkOpenMP
 
     int threadsNumber = 0;
 
-#pragma omp parallel for shared(threadsNumber)
+#pragma omp parallel for default(shared)
     for(int i = 0; i < 100; i++) {
         int currentNum = omp_get_num_threads();
         if(currentNum > threadsNumber)

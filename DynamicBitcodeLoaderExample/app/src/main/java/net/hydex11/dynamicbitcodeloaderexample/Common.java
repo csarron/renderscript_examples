@@ -24,6 +24,7 @@
 
 package net.hydex11.dynamicbitcodeloaderexample;
 
+import android.content.Context;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,12 +34,20 @@ import java.io.File;
 public class Common {
     // Custom RenderScript cache path. RS uses by default one, but for our usage, it is more
     // convenient to define a different one, as we should not interfere with other rs scripts
-    public static final String externalDirPath = new File(Environment.getExternalStorageDirectory(), "net.hydex11.dynamicbitcodeloader").getAbsolutePath();
+    private static String externalDirPath;
 
     // Function to run a callback on UI thread
     public static void runOnUiThread(Runnable runnable) {
         final Handler UIHandler = new Handler(Looper.getMainLooper());
         UIHandler.post(runnable);
+    }
+
+    public static String getExternalDirPath() {
+        return externalDirPath;
+    }
+
+    public static void setExternalDirPath(Context context) {
+        externalDirPath = new File(context.getCacheDir(), "net.hydex11.dynamicbitcodeloader").getAbsolutePath();
     }
 
     // Util class to store script bitcode

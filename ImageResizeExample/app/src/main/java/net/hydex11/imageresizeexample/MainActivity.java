@@ -73,9 +73,7 @@ public class MainActivity extends AppCompatActivity {
         Bitmap bitmapNearest = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888);
         Bitmap bitmapBicubic = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888);
 
-        main.set_inputWidth(inputWidth);
-        main.set_inputHeight(inputHeight);
-        main.invoke_setOutputSize(outputWidth, outputHeight);
+        main.invoke_setInformation(inputWidth, inputHeight, outputWidth, outputHeight);
 
         // Build output Allocations
         Type.Builder tbOutput = new Type.Builder(mRS, Element.RGBA_8888(mRS));

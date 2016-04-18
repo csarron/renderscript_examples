@@ -1,6 +1,6 @@
-/*This is mechanically generated code*/
 #include "fast.h"
 #include <omp.h>
+#include <atomic>
 
 static void make_offsets(int pixel[], int row_stride) {
     pixel[0] = 0 + row_stride * 3;
@@ -22,7 +22,7 @@ static void make_offsets(int pixel[], int row_stride) {
 }
 
 xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num_corners) {
-    int num_corners = 0;
+    std::atomic_int num_corners;
     xy *ret_corners;
     int rsize = 512;
     int pixel[16];
@@ -30,7 +30,7 @@ xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num
 
     make_offsets(pixel, stride);
 
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
     for (y = 4; y < ysize - 5; y++)
         for (x = 4; x < xsize - 5; x++) {
             byte *p = im + x + y * stride;
@@ -2252,7 +2252,7 @@ xy *fast9_detect(byte *im, int xsize, int ysize, int stride, int b, int *ret_num
 
         }
 
-    *ret_num_corners = num_corners;
+    *ret_num_corners = num_corners.load();
     return ret_corners;
 
 }

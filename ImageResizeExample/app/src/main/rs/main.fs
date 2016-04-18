@@ -6,20 +6,36 @@
 
 rs_allocation inputAllocation;
 
-// Input image size
-int inputWidth;
-int inputHeight;
+// Sets image sizes and calculates the scale factor
+static float scaleInv;
+static int inputWidth, inputHeight, outputWidth, outputHeight;
 
-// Set output image size and calculates the scale factor
-static float scale, scaleInv;
-static int outputWidth, outputHeight;
+void setInformation(int _inputWidth, int _inputHeight,
+    int _outputWidth, int _outputHeight){
 
-void setOutputSize(int width, int height){
-outputWidth = width;
-outputHeight = height;
+    inputWidth = _inputWidth;
+    inputHeight = _inputHeight;
+    outputWidth = _outputWidth;
+    outputHeight = _outputHeight;
 
-scale = (float)outputWidth/(float)inputWidth;
-scaleInv = 1.0f/scale;
+    // Calculates inverse scale factor, by which
+    // to round coordinates.
+    //
+    // Ex:
+    // Input size is 100
+    // Output desired size is 25
+    //
+    // Scale factor is 25 / 100 = 0.25
+    // Inverse scale factor is 1 / 0.25 = 4
+    //
+    // When iterating directly on the output
+    // allocation, to get input element it is needed
+    // to use the inverse scale factor.
+    //
+    // Current output element index is 20
+    // Respective input element index is 20 * 4 = 80
+    //
+    scaleInv = (float)inputWidth/(float)outputWidth;
 }
 
 // Standard bicubic resize process
