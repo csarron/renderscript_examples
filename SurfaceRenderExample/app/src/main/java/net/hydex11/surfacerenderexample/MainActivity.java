@@ -175,10 +175,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // As we are moving on an endless loop, it is better to not run it on the UI thread, but
         // on a different one
         rsLoop = new Thread(new Runnable() {
+            boolean mbCanRun = true;
 
             @Override
             public void run() {
-                while (true) {
+                while (mbCanRun) {
 
                     if (!isProcessing) {
                         isProcessing = true;

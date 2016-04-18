@@ -18,7 +18,7 @@ float clamp(float n, float lower, float upper)
 void yuvToGray(byte* input, byte* output)
 {
     
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
     for(int y = 0; y < imageHeight; y++) {
         for(int x = 0; x < imageWidth; x++) {
 

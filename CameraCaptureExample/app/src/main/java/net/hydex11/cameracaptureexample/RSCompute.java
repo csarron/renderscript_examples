@@ -205,7 +205,8 @@ public class RSCompute {
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            resetAllocation(new Surface(surface));
+            Surface mSurface = new Surface(surface);
+            resetAllocation(mSurface);
         }
 
         @Override

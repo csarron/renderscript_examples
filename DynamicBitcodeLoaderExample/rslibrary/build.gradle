@@ -53,7 +53,9 @@ dependencies {
     compile project(':rsscriptparser')
 }
 
-// Just a sample task, only for debug build type!
+// Just a sample task, in this case for debug build type
+// It copies our compiled bitcode files inside another dir, for better
+// order inside our project.
 task copyRSBitcode(type: Copy) {
     from('build/generated/res/rs/debug/raw')
     into("$projectDir/build/bitcodes")
@@ -61,6 +63,9 @@ task copyRSBitcode(type: Copy) {
     include '*.bc' // Copy bitcode files
 }
 
+// Invokes rsscriptparser library, that will generate .properties files,
+// one for each RS script that was compiled to bc. It will check that, for a .rs file,
+// the corresponding .bc file exists before parsing the source .rs file.
 task parseRSScripts(dependsOn: copyRSBitcode,type: JavaExec) {
 
     main = 'net.hydex11.RSScriptParser'
@@ -74,4 +79,6 @@ task parseRSScripts(dependsOn: copyRSBitcode,type: JavaExec) {
 
 }
 
+// Here we tell Gradle that, when we invoke the assembleDebug task, it will be followed
+// by our custom ones.
 assembleDebug.finalizedBy(parseRSScripts)
