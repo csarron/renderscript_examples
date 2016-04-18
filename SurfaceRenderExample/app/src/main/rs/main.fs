@@ -44,16 +44,6 @@ Particle_t __attribute__((kernel)) initParticles(Particle_t in, uint32_t x) {
     return in;
 }
 
-// Random number function, faster than rsRand
-// http://stackoverflow.com/questions/28115905/rsrand-significantly-slows-down-renderscript
-uint32_t r0 = 0x6635e5ce, r1 = 0x13bf026f, r2 = 0x43225b59, r3 = 0x3b0314d0;
-static float getRandomNumber(){
-uint32_t t = r0 ^ (r0 << 11);
-  r0 = r1; r1 = r2; r2 = r3;
-  r3 = r3 ^ (r3 >> 19) ^ t ^ (t >> 8);
-  return (float) r3 / 0xffffffff;
-}
-
 // Kernel function that updates particles and draws their positions
 Particle_t __attribute__((kernel)) drawParticles(Particle_t in, uint32_t x) {
 
@@ -61,14 +51,14 @@ Particle_t __attribute__((kernel)) drawParticles(Particle_t in, uint32_t x) {
     if(in.isValid == false)
     {
         in.x=0;
-        in.y=getRandomNumber()*(float)renderAllocationHeight;
+        in.y=rsRand(0,renderAllocationHeight);
 
         // Calculates a random launch angle for the particle (horizontal axis),
         // min angle is -15, so pointing a bit downwards, max is 60, upwards
-        float angle = radians(getRandomNumber()*75.0f-15.0f);
+        float angle = radians(rsRand(-15.0f,60.0f));
 
         // Calculate random launch speed, min 5, max 60
-        float launchSpeed = getRandomNumber()*55.0f+5.0f;
+        float launchSpeed = rsRand(5.0f,60.0f);
 
         // Sets current horizontal speed at random value
         in.vx = launchSpeed * cos(angle);
@@ -80,9 +70,9 @@ Particle_t __attribute__((kernel)) drawParticles(Particle_t in, uint32_t x) {
         in.lastUpdateTime = rsUptimeMillis();
 
         // Calculates random particle color
-        in.color.r = round(getRandomNumber())*255;
-        in.color.g = round(getRandomNumber())*255;
-        in.color.b = round(getRandomNumber())*255;
+        in.color.r = rsRand(0,255);
+        in.color.g = rsRand(0,255);
+        in.color.b = rsRand(0,255);
         in.color.a = 255;
 
     }
