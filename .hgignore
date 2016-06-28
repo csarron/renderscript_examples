@@ -11,3 +11,9 @@ RSNDKExample/app/src/main/libs/*
 *~
 *.orig
 ProfilerExample/app/src/main/jni/libs/*
+ProfilerExample/crowdtest/crowd/*
+ProfilerExample/crowdtest/.Rhistory
+ProfilerExample/crowdtest/.RData
+ProfilerExample/crowdtest/Rplots.pdf
+ProfilerExample/crowdtest/output-high.csv
+ProfilerExample/crowdtest/output-low.csv

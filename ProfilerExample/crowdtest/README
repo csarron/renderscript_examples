@@ -1,0 +1,12 @@
+# Prerequisites
+
+1) Install R >= 3.2.0 (e.g. https://www.digitalocean.com/community/tutorials/how-to-set-up-r-on-ubuntu-14-04).
+2) Run `Rscript install.R` from terminal.
+
+# Usage
+
+1) Extract the `crowd.zip` file in this folder. It contains all the CSV records for the crowdsourced test.
+2) Run `Rscript readprofilerdata.R`.
+3) Observe the `Rplots.pdf` file.
+
+
