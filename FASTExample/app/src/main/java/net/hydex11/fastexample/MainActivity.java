@@ -24,6 +24,7 @@
 
 package net.hydex11.fastexample;
 
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -35,12 +36,16 @@ import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -60,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
 
     TextureView rsResultTextureView;
     Surface rsResultSurface;
+
+    // Utility function to enable saving current screen
+    boolean saveCurrentScreen = false;
 
     private void example() {
         timings = new Timings(this);
@@ -260,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                 // To be used only to understand how FAST extraction works. It has no
                 // optimizations at all. Do not use it for benchmark purposes because it
                 // is terribly slow. Turn to true to enable it.
-                if(false) {
+                if (false) {
                     scriptCFastNoOptimization.forEach_fastNoOptimized(grayAllocation, fastKpAllocation, fastLaunchOptions);
                     timings.addTiming("RenderScript FAST (no optimization)");
                 }
@@ -287,6 +295,38 @@ public class MainActivity extends AppCompatActivity {
 
                 timings.debugTimings();
 
+                // Save screens
+                if(saveCurrentScreen)
+                {
+                    try {
+                        String fileName = String.valueOf(System.currentTimeMillis());
+                        Bitmap tmpBitmap = Bitmap.createBitmap(inputImageSize.width, inputImageSize.height, Bitmap.Config.ARGB_8888);
+
+                        // Save input image
+                        rgbAllocation.copyTo(tmpBitmap);
+                        Util.saveImageToExternal(MainActivity.this, fileName + "-rgba", tmpBitmap);
+
+                        // Save gray image
+                        scriptCUtil.forEach_grayToRGBA(grayAllocation, outputAllocation);
+                        outputAllocation.copyTo(tmpBitmap);
+                        Util.saveImageToExternal(MainActivity.this, fileName + "-gray", tmpBitmap);
+
+                        // Save FAST image
+                        scriptCUtil.forEach_showFastKeypoints(fastKpAllocation, outputAllocation);
+                        outputAllocation.copyTo(tmpBitmap);
+                        Util.saveImageToExternal(MainActivity.this, fileName + "-fast", tmpBitmap);
+
+                        Toast.makeText(MainActivity.this,"Images saved", Toast.LENGTH_SHORT).show();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.printStackTrace();
+                    }
+
+                    saveCurrentScreen = false;
+                }
+
             }
             camera.addCallbackBuffer(data);
         }
@@ -294,7 +334,9 @@ public class MainActivity extends AppCompatActivity {
 
     // NDK FAST library extraction
     private native int setImageSize(int width, int height);
+
     private native int yuvToGray(byte[] data);
+
     private native int fastLibExtraction();
 
     // Surfaces callbacks, to initialize the process
@@ -338,4 +380,23 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
+
+    // Menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.saveScreen:
+                saveCurrentScreen = true;
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 }

@@ -23,3 +23,16 @@ uchar4 __attribute__((kernel)) showFastKeypoints(uchar in, uint32_t x, uint32_t 
    if(in > 0) return red;
    return transparent;
 }
+
+// Converts a 1-channel image to a 4-channel one
+uchar4 __attribute__((kernel)) grayToRGBA(uchar in, uint32_t x, uint32_t y)
+{
+   uchar4 out;
+
+   out.a = 255;
+   out.r = in;
+   out.g = in;
+   out.b = in;
+
+   return out;
+}
