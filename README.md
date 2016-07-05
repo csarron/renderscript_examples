@@ -1,10 +1,10 @@
-# RenderScript: parallel computing on Android, the easy way
+[Link Text](Link URL)# RenderScript: parallel computing on Android, the easy way
 
 This repository contains all the examples that are shown inside the **[RenderScript: parallel computing on Android, the easy way](https://hydex11.net/rsbooked1.html)** book.
 
 **Edition: 1st** (Date published: July 3rd, 2016)
 
-**ISBN (Paperback): [9791220011303](https://www.amazon.com/s/field-keywords=9791220011303)**<br/>
+**ISBN (Paperback): [9791220011303](https://www.amazon.com/s/field-keywords=9791220011303)**
 **ISBN (Kindle - eBook): [9791220011297](https://www.amazon.com/s/field-keywords=9791220011297)**
 
 ## Requirements
