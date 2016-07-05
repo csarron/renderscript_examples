@@ -5,6 +5,7 @@ This repository contains all the examples that are shown inside the **[RenderScr
 **Edition: 1st** (Date published: July 3rd, 2016)
 
 **ISBN (Paperback): [9791220011303](https://www.amazon.com/s/field-keywords=9791220011303)**
+
 **ISBN (Kindle - eBook): [9791220011297](https://www.amazon.com/s/field-keywords=9791220011297)**
 
 ## Requirements
