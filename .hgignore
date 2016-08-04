@@ -17,3 +17,5 @@ ProfilerExample/crowdtest/.RData
 ProfilerExample/crowdtest/Rplots.pdf
 ProfilerExample/crowdtest/output-high.csv
 ProfilerExample/crowdtest/output-low.csv
+OpenCVInteropExample/app/src/main/libs/*
+OpenCVInteropExample/openCVLibrary310/native/*
