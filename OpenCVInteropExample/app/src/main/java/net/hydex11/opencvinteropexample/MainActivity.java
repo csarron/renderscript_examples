@@ -39,6 +39,21 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/*
+What this sample project does is:
+
+1. Loads a custom drawable file, bundled together with the app, inside a Bitmap.
+2. Creates an OpenCV mat from the Bitmap.
+3. Instantiates a RenderScript allocation, which points to the OpenCV mat data pointer.
+4. Instantiates another RS allocation, which points to another OpenCV mat, to be used as output.
+5. Executes a kernel over the input allocation.
+6. Converts the OpenCV output allocation to a Bitmap. **Note:** the output allocation is DIRECTLY
+bound to the output OpenCV allocation because they share the same memory address.
+
+Note: please, refer to the `README.md`, which comes together with the example, to have it work
+correctly. It requires you to download the OpenCV SDK.
+
+ */
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -55,18 +70,18 @@ public class MainActivity extends AppCompatActivity {
     The concept of this example is based upon the RS ability to instantiate an Allocation using
     a user-provided data pointer.
 
-    The ability to support a user-provided data pointer is dependant upon the RS device-specific
+    The ability to support a user-provided data pointer is dependent upon the RS device-specific
     driver. When tested on a Galaxy Note 3 (Android 5.1), it didn't work.
     There is a high chance that later versions of Android provide good support for this functionality.
 
-    Enabling the RS support library, this functionality works, at the cost of using a non-performant
-    RS driver.
+    This functionality works by enabling the RS support library at the cost of using a
+    non-performant RS driver.
 
     ---
 
     The process of binding a RS allocation to a user-provided pointer can be achieved by directly
-    calling the native RS function nAllocationCreateTyped and passing it, as last argument, the
-    pointer address to the user data (in this case, the OpenCV mat data pointer).
+    calling the native RS function `RenderScript.nAllocationCreateTyped` and passing it, as last
+    argument, the pointer address to the user data (in this case, the OpenCV mat data pointer).
 
     This process, however, requires the usage of Java reflection:
 
