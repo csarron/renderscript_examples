@@ -51,12 +51,13 @@ public class MainActivity extends AppCompatActivity {
     The chosen view, for this example, must be contained inside a bigger container (ex. a LinearLayout).
     The blur process:
 
-    * Gets a screenshot of the view.
+    * Gets a screenshot of the original view.
     * Instantiates all RenderScript allocations (one for input and one for blur output).
-    * Blurs the screenshot using the ScriptIntrinsicBlur class.
     * Creates a TextureView to display the blur result.
-    * Substitutes the new TextureView with the original view. In this process, the original view
-      gets saved inside the "tag" field of the new TextureView, so that later it can be restored.
+    * Substitutes the new TextureView with the original view. In this process, the new view
+      gets saved inside the "tag" field of the original view, so that later the original view can be
+      substituted back with the new TextureView.
+    * Blurs the screenshot using the ScriptIntrinsicBlur class.
 
     2) Display a simple dialog
     3) Unblur the original view
