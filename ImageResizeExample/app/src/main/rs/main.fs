@@ -2,7 +2,7 @@
 #pragma version(1)
 
 // The java_package_name directive needs to use your Activity's package path
-#pragma rs java_package_name(net.hydex11.surfacerenderexample)
+#pragma rs java_package_name(net.hydex11.imageresizeexample)
 
 rs_allocation inputAllocation;
 

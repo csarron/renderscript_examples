@@ -31,8 +31,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
 
-import net.hydex11.surfacerenderexample.ScriptC_main;
-
 public class MainActivity extends AppCompatActivity {
 
     @Override
