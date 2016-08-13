@@ -7,10 +7,6 @@
 // Store the input allocation
 rs_allocation inputAllocation;
 
-// Util variables
-int inWidth;
-int inHeight;
-
 // Magnifying
 // TODO: here, some checks should be performed to prevent atX and atY to be < 0, as well
 //   as them to not be greater than width and height
