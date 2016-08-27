@@ -22,11 +22,11 @@ uchar4 __attribute__((kernel)) fillWithBlack(int x, int y) {
 rs_allocation inputAllocation;
 
 // Offset indices, which define the start point for the copy in the input allocation.
-int outIndexX;
-int outIndexY;
+int inputOffsetX;
+int inputOffsetY;
 
 uchar4 __attribute__((kernel)) copyAllocation(int x, int y) {
 
-    return rsGetElementAt_uchar4(inputAllocation, x + outIndexX, y + outIndexY);
+    return rsGetElementAt_uchar4(inputAllocation, x + inputOffsetX, y + inputOffsetY);
 
 }

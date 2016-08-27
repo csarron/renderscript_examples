@@ -108,8 +108,8 @@ public class MainActivity extends AppCompatActivity {
 
         // --- Output section, copies the convolution result to outputAllocation
         scriptC_main.set_inputAllocation(convolvedAllocation);
-        scriptC_main.set_outIndexX(outIndexX);
-        scriptC_main.set_outIndexY(outIndexY);
+        scriptC_main.set_inputOffsetX(outIndexX);
+        scriptC_main.set_inputOffsetY(outIndexY);
 
         scriptC_main.forEach_copyAllocation(outputAllocation);
 
